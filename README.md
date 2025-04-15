@@ -27,9 +27,9 @@ Nova Sonic 是一个基于 Amazon Bedrock Nova 的实时语音交互演示项目
 
 观看 Nova Sonic 演示视频：
 
-https://user-images.githubusercontent.com/teaguexiao/web-nova-sonic/raw/main/static/Nova%20Sonic%20Demo%20Recording.mp4
+[点击观看演示视频](static/Nova%20Sonic%20Demo%20Recording.mp4)
 
-[![Nova Sonic Demo](https://img.shields.io/badge/观看演示-Nova%20Sonic-blue)](https://user-images.githubusercontent.com/teaguexiao/web-nova-sonic/raw/main/static/Nova%20Sonic%20Demo%20Recording.mp4)
+[![Nova Sonic Demo](https://img.shields.io/badge/观看演示-Nova%20Sonic-blue)](static/Nova%20Sonic%20Demo%20Recording.mp4)
 
 ## English Version
 
@@ -56,9 +56,9 @@ Nova Sonic is a real-time voice interaction demonstration project based on Amazo
 
 Watch Nova Sonic in action:
 
-https://user-images.githubusercontent.com/teaguexiao/web-nova-sonic/raw/main/static/Nova%20Sonic%20Demo%20Recording.mp4
+[Click to watch demo video](static/Nova%20Sonic%20Demo%20Recording.mp4)
 
-[![Nova Sonic Demo](https://img.shields.io/badge/Watch%20Demo-Nova%20Sonic-blue)](https://user-images.githubusercontent.com/teaguexiao/web-nova-sonic/raw/main/static/Nova%20Sonic%20Demo%20Recording.mp4)
+[![Nova Sonic Demo](https://img.shields.io/badge/Watch%20Demo-Nova%20Sonic-blue)](static/Nova%20Sonic%20Demo%20Recording.mp4)
 
 ---
 
