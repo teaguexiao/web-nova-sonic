@@ -25,7 +25,10 @@ Nova Sonic 是一个基于 Amazon Bedrock Nova 的实时语音交互演示项目
 
 观看 Nova Sonic 演示视频：
 
-[点击观看演示视频](static/Nova%20Sonic%20Demo%20Recording.mp4)
+<video controls style="width: 50%;">
+  <source src="https://d18k98y33mzd4b.cloudfront.net/Nova+Sonic+Demo+Recording.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 [![Nova Sonic Demo](https://img.shields.io/badge/观看演示-Nova%20Sonic-blue)](static/Nova%20Sonic%20Demo%20Recording.mp4)
 
