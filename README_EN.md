@@ -25,13 +25,8 @@ Nova Sonic is a real-time voice interaction demonstration project based on Amazo
 
 Watch Nova Sonic in action:
 
-<video controls style="width: 50%;">
-  <source src="https://d18k98y33mzd4b.cloudfront.net/Nova+Sonic+Demo+Recording.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
 [![Nova Sonic Demo](https://img.shields.io/badge/Watch%20Demo-Nova%20Sonic-blue)](https://d18k98y33mzd4b.cloudfront.net/Nova+Sonic+Demo+Recording.mp4)
 
 ---
 
-© 2024 Nova Sonic Demo. All rights reserved. 
+© 2025 Nova Sonic Demo. All rights reserved. 
