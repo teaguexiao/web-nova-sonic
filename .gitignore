@@ -17,3 +17,8 @@ ENV/
 
 # Logs
 *.log 
+
+# Security
+*.pem 
+
+aws_info.txt
