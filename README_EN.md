@@ -21,6 +21,14 @@ Nova Sonic is a real-time voice interaction demonstration project based on Amazo
   - Language teaching (oral English teachers)
   - Role-playing scenarios
 
+### 🌐 Live Demo
+
+Visit our demo website: [Nova Sonic Demo](https://nova-sonic.teague.live/)
+
+Login credentials:
+- Username: nova
+- Password: nova
+
 ### 🎥 Demo Video
 
 Watch Nova Sonic in action:

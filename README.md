@@ -21,6 +21,14 @@ Nova Sonic 是一个基于 Amazon Bedrock Nova 的实时语音交互演示项目
   - 语言教学（口语老师）
   - Role Play 互动
 
+### 🌐 在线演示
+
+访问我们的演示网站：[Nova Sonic Demo](https://nova-sonic.teague.live/)
+
+登录凭据：
+- 用户名：nova
+- 密码：nova
+
 ### 🎥 演示视频
 
 观看 Nova Sonic 演示视频：
