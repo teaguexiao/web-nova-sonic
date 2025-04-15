@@ -27,10 +27,15 @@ Nova Sonic 是一个基于 Amazon Bedrock Nova 的实时语音交互演示项目
 
 观看 Nova Sonic 演示视频：
 
-<video width="100%" controls>
-  <source src="static/Nova Sonic Demo Recording.mov" type="video/quicktime">
-  您的浏览器不支持视频标签。您可以 <a href="static/Nova Sonic Demo Recording.mov">下载视频</a> 观看。
-</video>
+<!-- 
+要添加视频到 README：
+1. 创建一个新的 Issue
+2. 将 static/Nova Sonic Demo Recording.mov 拖拽到 Issue 评论框中
+3. 等待上传完成，GitHub 会生成一个视频链接
+4. 复制该链接替换下面的 VIDEO_URL
+-->
+
+![Nova Sonic Demo](VIDEO_URL)
 
 ## English Version
 
@@ -57,10 +62,15 @@ Nova Sonic is a real-time voice interaction demonstration project based on Amazo
 
 Watch Nova Sonic in action:
 
-<video width="100%" controls>
-  <source src="static/Nova Sonic Demo Recording.mov" type="video/quicktime">
-  Your browser does not support the video tag. You can <a href="static/Nova Sonic Demo Recording.mov">download the video</a> to watch it.
-</video>
+<!-- 
+To add the video to README:
+1. Create a new Issue
+2. Drag and drop static/Nova Sonic Demo Recording.mov into the Issue comment
+3. Wait for upload to complete, GitHub will generate a video URL
+4. Copy that URL and replace VIDEO_URL below
+-->
+
+![Nova Sonic Demo](VIDEO_URL)
 
 ---
 
