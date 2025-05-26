@@ -103,11 +103,27 @@ const toolDetailsData = {
   ],
   "status": "success"
 }`
+    },
+    speakerControlTool: {
+        description: "Control a smart speaker device with various commands like power on/off, volume adjustment, and mute/unmute. This tool simulates controlling an IoT speaker in your home.",
+        sampleInput: `{
+  "command": "volume_up"
+}`,
+        sampleOutput: `{
+  "message": "Volume increased to 60%",
+  "speaker_state": {
+    "power": true,
+    "volume": 60,
+    "muted": false
+  },
+  "status": "success"
+}`
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    const toolItems = document.querySelectorAll('.tool-item');
+    // Use a function to get the tool items to ensure we have the latest DOM elements
+    const getToolItems = () => document.querySelectorAll('.tool-item');
     const toolDetailsModal = document.getElementById('toolDetailsModal');
     const closeToolDetailsModal = document.getElementById('closeToolDetailsModal');
     const modalToolTitle = document.getElementById('modalToolTitle');
@@ -121,7 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
         trackOrderTool: 'Order Tracking Tool',
         getWeatherTool: 'Weather Tool',
         getMoodSuggestionTool: 'Mood Suggestion Tool',
-        searchTool: 'Internet Search Tool'
+        searchTool: 'Internet Search Tool',
+        speakerControlTool: 'Speaker Control Tool'
     };
     
     // Function to show tool details modal
@@ -141,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toolDetailsModal.classList.add('active');
             
             // Mark the selected tool as active
-            toolItems.forEach(item => {
+            getToolItems().forEach(item => {
                 if (item.dataset.tool === toolName) {
                     item.classList.add('active');
                 } else {
@@ -151,25 +168,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Add click event listeners to tool items
-    toolItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const toolName = item.dataset.tool;
+    // Add click event listeners to tool items using event delegation
+    document.querySelector('.tools-items').addEventListener('click', (event) => {
+        // Find the closest tool-item parent element
+        const toolItem = event.target.closest('.tool-item');
+        if (toolItem) {
+            const toolName = toolItem.dataset.tool;
             showToolDetailsModal(toolName);
-        });
+        }
     });
     
     // Close modal when clicking the close button
     closeToolDetailsModal.addEventListener('click', () => {
         toolDetailsModal.classList.remove('active');
-        toolItems.forEach(item => item.classList.remove('active'));
+        getToolItems().forEach(item => item.classList.remove('active'));
     });
     
     // Close modal when clicking outside the modal content
     toolDetailsModal.addEventListener('click', (event) => {
         if (event.target === toolDetailsModal) {
             toolDetailsModal.classList.remove('active');
-            toolItems.forEach(item => item.classList.remove('active'));
+            getToolItems().forEach(item => item.classList.remove('active'));
         }
     });
     
@@ -177,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && toolDetailsModal.classList.contains('active')) {
             toolDetailsModal.classList.remove('active');
-            toolItems.forEach(item => item.classList.remove('active'));
+            getToolItems().forEach(item => item.classList.remove('active'));
         }
     });
 });

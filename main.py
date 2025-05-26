@@ -640,14 +640,22 @@ class StreamManager:
                             self.toolName = json_data['event']['toolUse']['toolName']
                             self.toolUseId = json_data['event']['toolUse']['toolUseId']
                             print(f"Tool use detected: {self.toolName}, ID: {self.toolUseId}")
+                            print(f"Tool use content: {json.dumps(self.toolUseContent, indent=2)}")
                        
                         elif 'contentEnd' in json_data['event'] and json_data['event'].get('contentEnd', {}).get('type') == 'TOOL':
                             print("Processing tool use and sending result")
-                            toolResult = await tool_manager.process_tool_use(self.toolName, self.toolUseContent)
-                            toolContent = str(uuid.uuid4())
-                            await self.send_tool_start_event(toolContent)
-                            await self.send_tool_result_event(toolContent, toolResult)
-                            await self.send_tool_content_end_event(toolContent)
+                            try:
+                                print(f"About to process tool: {self.toolName}")
+                                toolResult = await tool_manager.process_tool_use(self.toolName, self.toolUseContent)
+                                print(f"Tool result: {json.dumps(toolResult, indent=2)}")
+                                toolContent = str(uuid.uuid4())
+                                await self.send_tool_start_event(toolContent)
+                                await self.send_tool_result_event(toolContent, toolResult)
+                                await self.send_tool_content_end_event(toolContent)
+                            except Exception as tool_error:
+                                print(f"Error processing tool: {tool_error}")
+                                import traceback
+                                print(traceback.format_exc())
                 except asyncio.CancelledError:
                     print(f"Response task cancelled for client #{self.client_id}")
                     break
@@ -921,27 +929,112 @@ class StreamManager:
     
     async def send_tool_content_end_event(self, content_name):
         """Send a tool content end event to the Bedrock stream."""
-        tool_content_end_event = CONTENT_END_EVENT % (self.prompt_name, content_name)
-        print(f"Sending tool content event: {tool_content_end_event}")
-        await self.send_raw_event(tool_content_end_event)
 
-    def tool_result_event(self, content_name, content, role):
-        """Create a tool result event"""
-        if isinstance(content, dict):
-            content_json_string = json.dumps(content)
-        else:
-            content_json_string = content
-            
-        tool_result_event = {
-            "event": {
-                "toolResult": {
-                    "promptName": self.prompt_name,
-                    "contentName": content_name,
-                    "content": content_json_string
-                }
+async def close(self):
+    """Close the stream properly following nova_sonic.py pattern."""
+    if not self.is_active:
+        return
+    
+    print(f"Closing stream for client #{self.client_id}")
+    
+    try:
+        # First stop audio processing but keep stream active for cleanup
+        if self.audio_task and not self.audio_task.done():
+            print(f"Cancelling audio task for client #{self.client_id}")
+            self.audio_task.cancel()
+            try:
+                await self.audio_task
+            except asyncio.CancelledError:
+                pass
+
+        # Send cleanup events while stream is still active
+        try:
+            print(f"Sending cleanup events for client #{self.client_id}")
+            if self.stream_response and self.is_active:
+                # Send events in sequence
+                await self.send_audio_content_end_event()
+                await asyncio.sleep(0.1)  # Small delay between events
+                await self.send_raw_event(PROMPT_END_EVENT % self.prompt_name)
+                await asyncio.sleep(0.1)  # Small delay between events
+                await self.send_raw_event(SESSION_END_EVENT)
+                await asyncio.sleep(0.2)  # Longer delay to ensure events are processed
+        except Exception as e:
+            print(f"Error sending cleanup events for client #{self.client_id}: {e}")
+
+        # Mark stream as inactive before closing it
+        self.is_active = False
+        
+        # Close the stream
+        if self.stream_response:
+            try:
+                print(f"Closing input stream for client #{self.client_id}")
+                await self.stream_response.input_stream.close()
+                # Wait for any pending callbacks to complete
+                await asyncio.sleep(0.2)
+            except Exception as e:
+                print(f"Error closing input stream for client #{self.client_id}: {e}")
+
+        # Cancel response task last, after stream is closed and inactive
+        if self.response_task and not self.response_task.done():
+            print(f"Cancelling response task for client #{self.client_id}")
+            self.response_task.cancel()
+            try:
+                await self.response_task
+            except asyncio.CancelledError:
+                pass
+        
+    except Exception as e:
+        print(f"Error during stream closure for client #{self.client_id}: {e}")
+    finally:
+        # Final cleanup
+        self.is_active = False
+        self.stream_response = None
+        # Clear any pending messages
+        self.last_messages.clear()
+        print(f"Stream cleanup completed for client #{self.client_id}")
+        
+async def send_tool_start_event(self, content_name):
+    """Send a tool content start event to the Bedrock stream."""
+    content_start_event = self.TOOL_CONTENT_START_EVENT % (self.prompt_name, content_name, self.toolUseId)
+    print(f"Sending tool start event: {content_start_event}")  
+    await self.send_raw_event(content_start_event)
+
+async def send_tool_result_event(self, content_name, tool_result):
+    """Send a tool content event to the Bedrock stream."""
+    # Use the actual tool result from processToolUse
+    tool_result_event = self.tool_result_event(content_name=content_name, content=tool_result, role="TOOL")
+    print(f"Sending tool result event: {tool_result_event}")
+    await self.send_raw_event(tool_result_event)
+    
+async def send_tool_content_end_event(self, content_name):
+    """Send a tool content end event to the Bedrock stream."""
+    tool_content_end_event = CONTENT_END_EVENT % (self.prompt_name, content_name)
+    print(f"Sending tool content event: {tool_content_end_event}")
+    await self.send_raw_event(tool_content_end_event)
+
+def tool_result_event(self, content_name, content, role):
+    """Create a tool result event"""
+    if isinstance(content, dict):
+        # Ensure the content is properly formatted for the model
+        # Make sure we have a 'status' field for consistency
+        if 'status' not in content:
+            content['status'] = 'success'
+        content_json_string = json.dumps(content)
+    else:
+        content_json_string = content
+        
+    tool_result_event = {
+        "event": {
+            "toolResult": {
+                "promptName": self.prompt_name,
+                "contentName": content_name,
+                "toolUseId": self.toolUseId,  # Add the toolUseId to link the result to the request
+                "content": content_json_string
             }
         }
-        return json.dumps(tool_result_event)
+    }
+    return json.dumps(tool_result_event)
+
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Optional[str] = Cookie(None)):
     # Verify session before accepting WebSocket connection

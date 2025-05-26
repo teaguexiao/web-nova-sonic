@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nova Sonic Audio Demo</title>
     <link rel="stylesheet" href="/static/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #7C3AED;
@@ -13,6 +14,10 @@
             --text-color: #1F2937;
             --border-radius: 1rem;
             --transition: all 0.3s ease;
+            --chat-bubble-user: #E9F5FF;
+            --chat-bubble-assistant: #F5F3FF;
+            --chat-bubble-user-text: #0A85D1;
+            --chat-bubble-assistant-text: #7C3AED;
         }
 
         * {
@@ -269,6 +274,7 @@
             margin-bottom: 1.5rem;
             background: white;
             border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             padding: 1.5rem;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
@@ -380,45 +386,58 @@
         #transcript {
             background: white;
             border-radius: var(--border-radius);
-            padding: 1rem;
+            padding: 1.5rem;
             height: 500px;
             overflow-y: auto;
-            border: 1px solid #E5E7EB;
+            border: none;
             line-height: 1.2;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            background-image: url('/static/images/chat-bg-pattern.svg');
+            background-size: 200px;
+            background-blend-mode: overlay;
+            background-color: rgba(255, 255, 255, 0.97);
         }
 
         .message {
             margin-bottom: 0.15rem;
-            padding: 0.1rem 0.75rem;
-            border-radius: 0.25rem;
-            line-height: 1.1;
-            font-family: monospace;
-            font-size: 0.9rem;
+            padding: 0.8rem 1rem;
+            border-radius: 1.2rem;
+            line-height: 1.5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.95rem;
             white-space: pre-wrap;
             word-break: break-word;
+            max-width: 80%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .user-text {
             margin-left: auto;
-            color: var(--primary-color);
+            color: var(--chat-bubble-user-text);
             text-align: left;
             margin-bottom: 0.15rem;
+            background-color: var(--chat-bubble-user);
+            border-bottom-right-radius: 0.3rem;
         }
 
         .assistant-text {
             margin-right: auto;
-            color: var(--text-color);
+            color: var(--chat-bubble-assistant-text);
             text-align: left;
             margin-bottom: 0.15rem;
+            background-color: var(--chat-bubble-assistant);
+            border-bottom-left-radius: 0.3rem;
         }
 
         .message-timestamp {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #6B7280;
             margin-bottom: 0.1rem;
-            display: inline;
+            display: block;
             opacity: 0.7;
+            margin-top: 0.3rem;
+            font-weight: 500;
         }
 
         .message-content {
@@ -932,6 +951,10 @@
                                 <i class="fas fa-search"></i>
                                 <span>Internet Search</span>
                             </li>
+                            <li class="tool-item" data-tool="speakerControlTool">
+                                <i class="fas fa-volume-up"></i>
+                                <span>Speaker Control</span>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -1049,46 +1072,75 @@
         function addMessageToTranscript(data) {
             const transcriptDiv = document.getElementById('transcript');
             const isAssistant = data.role === 'ASSISTANT';
-            const messageRow = document.createElement('div');
-            messageRow.style.display = 'flex';
-            messageRow.style.alignItems = 'flex-end';
-            messageRow.style.marginBottom = '1.2em';
-            if (isAssistant) {
-                // 助手头像在左
-                const avatar = document.createElement('img');
-                avatar.src = roles[currentVoice].avatar;
-                avatar.className = 'bubble-avatar';
-                avatar.alt = 'AI';
-                avatar.style.width = '40px';
-                avatar.style.height = '40px';
-                avatar.style.objectFit = 'cover';
-                avatar.style.marginRight = '0.7em';
-                messageRow.appendChild(avatar);
-                // 气泡
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message assistant-text';
-                messageDiv.innerHTML = data.data;
-                messageRow.appendChild(messageDiv);
-            } else {
-                // 用户头像在右
-                // 气泡
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message user-text';
-                messageDiv.innerHTML = data.data;
-                messageRow.appendChild(messageDiv);
-                // 头像
-                const avatar = document.createElement('img');
-                avatar.src = '/static/images/cat.png';
-                avatar.className = 'bubble-avatar';
-                avatar.alt = 'Me';
-                avatar.style.width = '40px';
-                avatar.style.height = '40px';
-                avatar.style.objectFit = 'cover';
-                avatar.style.marginLeft = '0.7em';
-                messageRow.appendChild(avatar);
-            }
-            transcriptDiv.appendChild(messageRow);
             
+            // Create message container
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            messageContainer.style.display = 'flex';
+            messageContainer.style.flexDirection = isAssistant ? 'row' : 'row-reverse';
+            messageContainer.style.marginBottom = '1.5em';
+            messageContainer.style.position = 'relative';
+            
+            // Create avatar container
+            const avatarContainer = document.createElement('div');
+            avatarContainer.className = 'avatar-container';
+            avatarContainer.style.display = 'flex';
+            avatarContainer.style.flexDirection = 'column';
+            avatarContainer.style.alignItems = 'center';
+            avatarContainer.style.marginRight = isAssistant ? '0.8em' : '0';
+            avatarContainer.style.marginLeft = isAssistant ? '0' : '0.8em';
+            
+            // Create avatar
+            const avatar = document.createElement('img');
+            avatar.src = isAssistant ? roles[currentVoice].avatar : '/static/images/cat.png';
+            avatar.className = 'bubble-avatar';
+            avatar.alt = isAssistant ? 'AI' : 'Me';
+            avatar.style.width = '42px';
+            avatar.style.height = '42px';
+            avatar.style.objectFit = 'cover';
+            avatar.style.borderRadius = '50%';
+            avatar.style.border = '2px solid white';
+            avatar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            
+            // Create message content wrapper
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = 'message-wrapper';
+            messageWrapper.style.display = 'flex';
+            messageWrapper.style.flexDirection = 'column';
+            messageWrapper.style.maxWidth = '80%';
+            
+            // Create name label for assistant
+            if (isAssistant) {
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'name-label';
+                nameLabel.textContent = roles[currentVoice].name;
+                nameLabel.style.fontSize = '0.75rem';
+                nameLabel.style.fontWeight = '600';
+                nameLabel.style.color = 'var(--primary-color)';
+                nameLabel.style.marginBottom = '0.3rem';
+                nameLabel.style.marginLeft = '0.5rem';
+                messageWrapper.appendChild(nameLabel);
+            }
+            
+            // Create message bubble
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isAssistant ? 'message assistant-text' : 'message user-text';
+            messageDiv.innerHTML = data.data;
+            
+            // Add timestamp
+            const timestamp = document.createElement('div');
+            timestamp.className = 'message-timestamp';
+            const now = new Date();
+            timestamp.textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            messageDiv.appendChild(timestamp);
+            
+            // Add elements to DOM
+            avatarContainer.appendChild(avatar);
+            messageWrapper.appendChild(messageDiv);
+            messageContainer.appendChild(avatarContainer);
+            messageContainer.appendChild(messageWrapper);
+            transcriptDiv.appendChild(messageContainer);
+                    
             // Enhanced smooth scrolling behavior
             requestAnimationFrame(() => {
                 const scrollHeight = transcriptDiv.scrollHeight;

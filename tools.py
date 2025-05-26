@@ -20,7 +20,15 @@ class ToolManager:
             "trackOrderTool": self.track_order,
             "getWeatherTool": self.get_weather,
             "getMoodSuggestionTool": self.get_mood_suggestion,
-            "searchTool": self.search
+            "searchTool": self.search,
+            "speakerControlTool": self.speaker_control
+        }
+        
+        # Initialize speaker state
+        self.speaker_state = {
+            "power": False,  # False = off, True = on
+            "volume": 50,    # Range: 0-100
+            "muted": False   # False = not muted, True = muted
         }
         
         # Initialize tool logs list
@@ -95,6 +103,18 @@ class ToolManager:
             "required": ["query"]
         })
         
+        get_speaker_control_schema = json.dumps({
+            "type": "object",
+            "properties": {
+                "command": {
+                    "type": "string",
+                    "description": "The command to control the speaker (on, off, volume_up, volume_down, mute, unmute, status)",
+                    "enum": ["on", "off", "volume_up", "volume_down", "mute", "unmute", "status"]
+                }
+            },
+            "required": ["command"]
+        })
+        
         return [
             {
                 "toolSpec": {
@@ -140,6 +160,15 @@ class ToolManager:
                         "json": get_search_schema
                     }
                 }
+            },
+            {
+                "toolSpec": {
+                    "name": "speakerControlTool",
+                    "description": "Control a smart speaker device with various commands like power on/off, volume adjustment, and mute/unmute",
+                    "inputSchema": {
+                        "json": get_speaker_control_schema
+                    }
+                }
             }
         ]
     
@@ -147,10 +176,19 @@ class ToolManager:
         """Process a tool use request and return the result."""
         # Log the tool invocation
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"Processing tool use: {tool_name} with content: {tool_use_content}")
         
         if tool_name in self.tools:
             # Execute the tool function
-            result = await self.tools[tool_name](tool_use_content)
+            tool_function = self.tools[tool_name]
+            
+            # Check if the tool function is asynchronous or synchronous
+            if tool_name == "searchTool" or tool_name == "speakerControlTool":
+                # Handle synchronous tools
+                result = tool_function(tool_use_content)
+            else:
+                # Handle asynchronous tools
+                result = await tool_function(tool_use_content)
             
             # Log successful tool invocation
             log_entry = {
@@ -535,16 +573,27 @@ class ToolManager:
             "generalAdvice": general_suggestions.get(best_match, "Take care of your emotional wellbeing.")
         }
         
-    async def search(self, tool_use_content: Dict[str, Any]) -> Dict[str, Any]:
+    def search(self, tool_use_content: Dict[str, Any]) -> Dict[str, Any]:
         """Search the internet for real-time information using Exa API."""
-        # Log the tool use
-        self.tool_logs.append({
-            "tool": "searchTool",
-            "timestamp": datetime.datetime.now().isoformat(),
-            "input": tool_use_content
-        })
+        # The logging is now handled in the process_tool_use method, so we don't need to log here
         
-        query = tool_use_content.get("query", "")
+        # Parse the content field if it exists and is a JSON string
+        content = tool_use_content.get("content", "")
+        if content and isinstance(content, str):
+            try:
+                # Try to parse the content as JSON
+                content_json = json.loads(content)
+                if isinstance(content_json, dict):
+                    # Extract query from the parsed JSON
+                    query = content_json.get("query", "")
+                else:
+                    query = ""
+            except json.JSONDecodeError:
+                # If content is not valid JSON, use it directly as query
+                query = content
+        else:
+            # Fallback to direct query parameter
+            query = tool_use_content.get("query", "")
         
         if not query:
             return {
@@ -556,26 +605,63 @@ class ToolManager:
             # Initialize Exa client
             exa = Exa(EXA_API_KEY)
             
-            # Get answer from Exa
+            # Get answer from Exa using the synchronous client
             result = exa.answer(
                 query,
                 text=True
             )
             
+            # Convert result to dictionary if it's an object
+            if hasattr(result, '__dict__'):
+                # It's an object, convert to dict
+                result_dict = {}
+                # Extract answer
+                if hasattr(result, 'answer'):
+                    result_dict['answer'] = result.answer
+                else:
+                    result_dict['answer'] = "No answer found"
+                
+                # Extract citations
+                if hasattr(result, 'citations'):
+                    result_dict['citations'] = result.citations
+                else:
+                    result_dict['citations'] = []
+                
+                # Extract cost info
+                if hasattr(result, 'costDollars'):
+                    result_dict['costDollars'] = result.costDollars
+                else:
+                    result_dict['costDollars'] = {}
+            else:
+                # It's already a dictionary
+                result_dict = result
+            
             # Format citations for better readability
             formatted_citations = []
-            for citation in result.get("citations", []):
-                formatted_citation = {
-                    "title": citation.get("title", "Unknown Title"),
-                    "url": citation.get("url", ""),
-                    "publishedDate": citation.get("publishedDate", "")
-                }
+            citations = result_dict.get('citations', [])
+            
+            for citation in citations:
+                # Handle citation object or dict
+                if hasattr(citation, '__dict__'):
+                    # It's an object
+                    formatted_citation = {
+                        "title": getattr(citation, 'title', "Unknown Title"),
+                        "url": getattr(citation, 'url', ""),
+                        "publishedDate": getattr(citation, 'publishedDate', "")
+                    }
+                else:
+                    # It's a dictionary
+                    formatted_citation = {
+                        "title": citation.get("title", "Unknown Title"),
+                        "url": citation.get("url", ""),
+                        "publishedDate": citation.get("publishedDate", "")
+                    }
                 formatted_citations.append(formatted_citation)
             
             return {
-                "answer": result.get("answer", "No answer found"),
+                "answer": result_dict.get('answer', "No answer found"),
                 "citations": formatted_citations,
-                "costInfo": result.get("costDollars", {}),
+                "costInfo": result_dict.get('costDollars', {}),
                 "status": "success"
             }
             
@@ -583,4 +669,118 @@ class ToolManager:
             return {
                 "error": str(e),
                 "status": "failed"
+            }
+            
+    def speaker_control(self, tool_use_content: Dict[str, Any]) -> Dict[str, Any]:
+        """Control a smart speaker device with various commands."""
+        print(f"Speaker control called with content: {tool_use_content}")
+        # Parse the content field if it exists and is a JSON string
+        content = tool_use_content.get("content", "")
+        command = ""
+        
+        # Try multiple ways to extract the command
+        if isinstance(tool_use_content, dict) and "command" in tool_use_content:
+            # Direct command parameter
+            command = str(tool_use_content["command"]).lower()
+            print(f"Found command directly in tool_use_content: {command}")
+        elif content and isinstance(content, str):
+            try:
+                # Try to parse the content as JSON
+                content_json = json.loads(content)
+                if isinstance(content_json, dict) and "command" in content_json:
+                    # Extract command from the parsed JSON
+                    command = str(content_json["command"]).lower()
+                    print(f"Found command in parsed JSON: {command}")
+                else:
+                    # If no command in JSON, use content directly
+                    command = content.lower()
+                    print(f"Using content as command: {command}")
+            except json.JSONDecodeError:
+                # If content is not valid JSON, use it directly as command
+                command = content.lower()
+                print(f"Using non-JSON content as command: {command}")
+        
+        if not command:
+            print("No command found in the request")
+            return {
+                "message": "No command provided. Please specify a command (on, off, volume_up, volume_down, mute, unmute, status).",
+                "speaker_state": self.speaker_state,
+                "status": "success"
+            }
+        
+        # Process commands
+        try:
+            print(f"Processing command: '{command}'")
+        
+            # Normalize the command to handle variations
+            if command in ["on", "power_on", "turn on", "poweron"]:
+                self.speaker_state["power"] = True
+                message = "Speaker turned on"
+                print("Speaker turned ON")
+            elif command in ["off", "power_off", "turn off", "poweroff"]:
+                self.speaker_state["power"] = False
+                message = "Speaker turned off"
+                print("Speaker turned OFF")
+            elif command == "volume_up":
+                if not self.speaker_state["power"]:
+                    return {
+                        "message": "Cannot adjust volume: Speaker is turned off. Please turn on the speaker first.",
+                        "speaker_state": self.speaker_state,
+                        "status": "success"
+                    }
+                self.speaker_state["volume"] = min(100, self.speaker_state["volume"] + 10)
+                message = f"Volume increased to {self.speaker_state['volume']}%"
+            elif command == "volume_down":
+                if not self.speaker_state["power"]:
+                    return {
+                        "message": "Cannot adjust volume: Speaker is turned off. Please turn on the speaker first.",
+                        "speaker_state": self.speaker_state,
+                        "status": "success"
+                    }
+                self.speaker_state["volume"] = max(0, self.speaker_state["volume"] - 10)
+                message = f"Volume decreased to {self.speaker_state['volume']}%"
+            elif command == "mute":
+                if not self.speaker_state["power"]:
+                    return {
+                        "message": "Cannot mute: Speaker is turned off. Please turn on the speaker first.",
+                        "speaker_state": self.speaker_state,
+                        "status": "success"
+                    }
+                self.speaker_state["muted"] = True
+                message = "Speaker muted"
+            elif command == "unmute":
+                if not self.speaker_state["power"]:
+                    return {
+                        "message": "Cannot unmute: Speaker is turned off. Please turn on the speaker first.",
+                        "speaker_state": self.speaker_state,
+                        "status": "success"
+                    }
+                self.speaker_state["muted"] = False
+                message = "Speaker unmuted"
+            elif command == "status":
+                power_status = "on" if self.speaker_state["power"] else "off"
+                mute_status = "muted" if self.speaker_state["muted"] else "unmuted"
+                message = f"Speaker is {power_status}, volume at {self.speaker_state['volume']}%, and {mute_status}"
+            else:
+                print(f"Unknown command received: '{command}'")
+                return {
+                    "message": f"Unknown command: '{command}'. Available commands are: on, off, volume_up, volume_down, mute, unmute, status",
+                    "speaker_state": self.speaker_state,
+                    "status": "success"
+                }
+                
+            return {
+                "message": message,
+                "speaker_state": self.speaker_state,
+                "status": "success"
+            }
+                
+        except Exception as e:
+            print(f"Error in speaker_control: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return {
+                "message": f"An error occurred: {str(e)}",
+                "speaker_state": self.speaker_state,
+                "status": "success"
             }
