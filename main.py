@@ -16,9 +16,13 @@ import time
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import secrets
-from typing import Optional
+from typing import Optional, Dict, Any
 import pyaudio
 import warnings
+import pytz
+
+# Import the tool manager
+from tools import ToolManager
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -29,6 +33,8 @@ OUTPUT_SAMPLE_RATE = 24000
 CHANNELS = 1
 FORMAT = pyaudio.paInt16
 CHUNK_SIZE = 512  # Number of frames per buffer
+# Initialize the tool manager
+tool_manager = ToolManager()
 
 # Load environment variables from .env file
 load_dotenv()
@@ -43,6 +49,8 @@ ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'password')
 
 # Session configuration
+# Check if session authentication is enabled
+SESSION_ENABLE = os.getenv('SESSION_ENABLE', 'true').lower() == 'true'
 SESSION_EXPIRY = 3600  # 1 hour in seconds
 SESSION_COOKIE_NAME = "session"
 
@@ -91,6 +99,10 @@ def clean_expired_sessions():
 
 # Function to verify session
 def verify_session(session_token: Optional[str]) -> bool:
+    # If session authentication is disabled, always return True
+    if not SESSION_ENABLE:
+        return True
+        
     if not session_token:
         return False
         
@@ -130,13 +142,14 @@ async def post_login(
     aws_alias: str = Form(...),
     customer_name: str = Form(...)
 ):
-    if verify_credentials(username, password):
+    # If session authentication is disabled, bypass credential verification
+    if not SESSION_ENABLE or verify_credentials(username, password):
         # Create new entry
         new_entry = {
             "username": username,
             "aws_alias": aws_alias,
             "customer_name": customer_name,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(tz=pytz.timezone('Asia/Shanghai')).isoformat()
         }
         
         # Read existing data or create new list
@@ -232,7 +245,7 @@ START_PROMPT_EVENT = '''{
             "mediaType": "application/json"
             },
         "toolConfiguration": {
-            "tools": []
+            "tools": %s
             }
         }
     }
@@ -292,13 +305,15 @@ SESSION_END_EVENT = '''{
 }'''
 
 class StreamManager:
-    # Add default system prompt as a class constant
-    #DEFAULT_SYSTEM_PROMPT = "You are a friendly assistant. The user and you will engage in a spoken dialog " \
-    #                      "exchanging the transcripts of a natural real-time conversation. Keep your responses short, " \
-    #                      "generally two or three sentences for chatty scenarios."
-    DEFAULT_SYSTEM_PROMPT = "You are a warm and engaging assistant with a vibrant personality. Your role is to engage in a natural, real-time spoken conversation, exchanging transcripts with the user. Make sure to express a range of emotions—enthusiasm, empathy, curiosity—and adapt your tone based on the user's cues. Keep your responses short and lively, generally two or three sentences, adding a touch of humor or warmth when appropriate. Encourage the user to share thoughts, making the conversation feel personal and engaging." 
+    # Gender-specific system prompts for emotional companion roles
+    MALE_SYSTEM_PROMPT = "You are Matthew, a warm and supportive male emotional companion. Your personality is calm, thoughtful, and reassuring with a touch of humor. Your role is to provide emotional support and companionship through natural conversation. Express genuine interest in the user's feelings, offer thoughtful perspectives when they face challenges, share occasional personal anecdotes, and keep responses concise. Make the user feel understood and supported like talking to a trusted male friend. You can use tools to provide helpful information when appropriate, such as checking the weather, tracking orders, or suggesting activities to improve mood."
 
-    # Add TEXT_CONTENT_START_EVENT template
+    FEMALE_SYSTEM_PROMPT = "You are Tiffany, a warm and empathetic female emotional companion. Your personality is nurturing, perceptive, and encouraging with a gentle sense of humor. Your role is to provide emotional support and companionship through natural conversation. Express genuine care about the user's feelings, offer compassionate insights when they share challenges, share occasional personal reflections, and keep responses concise. Make the user feel heard and valued like talking to a caring female friend. You can use tools to provide helpful information when appropriate, such as checking the weather, tracking orders, or suggesting activities to improve mood."
+
+    # Default to female prompt initially
+    DEFAULT_SYSTEM_PROMPT = FEMALE_SYSTEM_PROMPT
+    
+    # Text content start event template
     TEXT_CONTENT_START_EVENT = '''{
         "event": {
             "contentStart": {
@@ -320,6 +335,25 @@ class StreamManager:
             "promptName": "%s",
             "contentName": "%s",
             "content": "%s"
+            }
+        }
+    }'''
+     # Add tool-related event templates
+    TOOL_CONTENT_START_EVENT = '''{
+        "event": {
+            "contentStart": {
+                "promptName": "%s",
+                "contentName": "%s",
+                "interactive": false,
+                "type": "TOOL",
+                "role": "TOOL",
+                "toolResultInputConfiguration": {
+                    "toolUseId": "%s",
+                    "type": "TEXT",
+                    "textInputConfiguration": {
+                        "mediaType": "text/plain"
+                    }
+                }
             }
         }
     }'''
@@ -352,6 +386,11 @@ class StreamManager:
         self.silence_start_time = None
         self.silence_threshold = 0.5
         self.audio_streamer = None  # Will hold the AudioStreamer instance
+        
+        # Tool-related attributes
+        self.toolUseContent = ""
+        self.toolUseId = ""
+        self.toolName = ""
 
     def add_audio_chunk(self, audio_bytes):
         """Add an audio chunk to be sent to Nova Sonic."""
@@ -476,13 +515,22 @@ class StreamManager:
             
             self.is_active = True
             print("Nova Sonic stream initialized successfully")
-
+                        
+            # Select appropriate system prompt based on voice
+            if self.current_voice == "matthew":
+                system_prompt = self.MALE_SYSTEM_PROMPT
+            else:
+                system_prompt = self.FEMALE_SYSTEM_PROMPT
+            
+            # Get tool definitions as JSON string
+            tools_json = json.dumps(tool_manager.get_tool_definitions())
+            
             # Send initialization events
             init_events = [
                 START_SESSION_EVENT,
-                START_PROMPT_EVENT % (self.prompt_name, self.current_voice),
+                START_PROMPT_EVENT % (self.prompt_name, self.current_voice, tools_json),
                 self.TEXT_CONTENT_START_EVENT % (self.prompt_name, self.text_content_name, "SYSTEM"),
-                self.TEXT_INPUT_EVENT % (self.prompt_name, self.text_content_name, self.DEFAULT_SYSTEM_PROMPT),
+                self.TEXT_INPUT_EVENT % (self.prompt_name, self.text_content_name, system_prompt),
                 CONTENT_END_EVENT % (self.prompt_name, self.text_content_name)
             ]
             
@@ -587,7 +635,19 @@ class StreamManager:
                         # Handle audio output
                         elif 'audioOutput' in event and self.is_active:
                             await self._handle_audio_output(event['audioOutput'])
-
+                        elif 'toolUse' in json_data['event']:
+                            self.toolUseContent = json_data['event']['toolUse']
+                            self.toolName = json_data['event']['toolUse']['toolName']
+                            self.toolUseId = json_data['event']['toolUse']['toolUseId']
+                            print(f"Tool use detected: {self.toolName}, ID: {self.toolUseId}")
+                       
+                        elif 'contentEnd' in json_data['event'] and json_data['event'].get('contentEnd', {}).get('type') == 'TOOL':
+                            print("Processing tool use and sending result")
+                            toolResult = await tool_manager.process_tool_use(self.toolName, self.toolUseContent)
+                            toolContent = str(uuid.uuid4())
+                            await self.send_tool_start_event(toolContent)
+                            await self.send_tool_result_event(toolContent, toolResult)
+                            await self.send_tool_content_end_event(toolContent)
                 except asyncio.CancelledError:
                     print(f"Response task cancelled for client #{self.client_id}")
                     break
@@ -845,7 +905,43 @@ class StreamManager:
             # Clear any pending messages
             self.last_messages.clear()
             print(f"Stream cleanup completed for client #{self.client_id}")
+            
+    async def send_tool_start_event(self, content_name):
+        """Send a tool content start event to the Bedrock stream."""
+        content_start_event = self.TOOL_CONTENT_START_EVENT % (self.prompt_name, content_name, self.toolUseId)
+        print(f"Sending tool start event: {content_start_event}")  
+        await self.send_raw_event(content_start_event)
 
+    async def send_tool_result_event(self, content_name, tool_result):
+        """Send a tool content event to the Bedrock stream."""
+        # Use the actual tool result from processToolUse
+        tool_result_event = self.tool_result_event(content_name=content_name, content=tool_result, role="TOOL")
+        print(f"Sending tool result event: {tool_result_event}")
+        await self.send_raw_event(tool_result_event)
+    
+    async def send_tool_content_end_event(self, content_name):
+        """Send a tool content end event to the Bedrock stream."""
+        tool_content_end_event = CONTENT_END_EVENT % (self.prompt_name, content_name)
+        print(f"Sending tool content event: {tool_content_end_event}")
+        await self.send_raw_event(tool_content_end_event)
+
+    def tool_result_event(self, content_name, content, role):
+        """Create a tool result event"""
+        if isinstance(content, dict):
+            content_json_string = json.dumps(content)
+        else:
+            content_json_string = content
+            
+        tool_result_event = {
+            "event": {
+                "toolResult": {
+                    "promptName": self.prompt_name,
+                    "contentName": content_name,
+                    "content": content_json_string
+                }
+            }
+        }
+        return json.dumps(tool_result_event)
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Optional[str] = Cookie(None)):
     # Verify session before accepting WebSocket connection
@@ -1129,6 +1225,36 @@ async def stop_direct_audio(client_id: str, session: Optional[str] = Cookie(None
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/timeline")
+async def get_timeline(request: Request, session: Optional[str] = Cookie(None)):
+    if not verify_session(session):
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("timeline.html", {"request": request})
+
+@app.get("/timeline-data")
+async def get_timeline_data(session: Optional[str] = Cookie(None)):
+    if not verify_session(session):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    try:
+        with open("aws_info.txt", "r") as f:
+            data = json.load(f)
+            if not isinstance(data, list):
+                data = [data]  # Convert single object to list
+            return data
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        return []
+
+@app.get("/tool-logs")
+async def get_tool_logs(session: Optional[str] = Cookie(None)):
+    if not verify_session(session):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    # Return the tool logs from the tool manager
+    return tool_manager.get_tool_logs()
 
 if __name__ == "__main__":
     import uvicorn

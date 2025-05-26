@@ -35,6 +35,28 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+        
+        /* Two-panel layout */
+        .two-panel-layout {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .left-panel {
+            flex: 0 0 300px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            height: fit-content;
+        }
+        
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
 
         .header {
             display: flex;
@@ -73,6 +95,121 @@
             font-weight: 600;
         }
 
+
+        .tool-result {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* Tool logs section */
+        .tool-logs-section {
+            margin-top: 2rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+        
+        .tool-logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #E5E7EB;
+            padding-bottom: 0.5rem;
+        }
+        
+        .tool-logs-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .tool-logs-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .tool-logs-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .tool-log-item {
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
+        
+        .tool-log-header {
+            display: flex;
+            justify-content: space-between;
+            background-color: #F9FAFB;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .tool-log-name {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        .tool-log-timestamp {
+            font-size: 0.875rem;
+            color: #6B7280;
+        }
+        
+        .tool-log-content {
+            padding: 1rem;
+        }
+        
+        .tool-log-section {
+            margin-bottom: 0.75rem;
+        }
+        
+        .tool-log-section-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: var(--text-color);
+        }
+        
+        .tool-log-data {
+            background-color: #F3F4F6;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        .tool-log-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .tool-log-status-success {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .tool-log-status-error {
+            background-color: #FEE2E2;
+            color: #B91C1C;
+        }
+        
+        .hidden {
+            display: none;
+        }
+
         .actions {
             display: flex;
             gap: 1rem;
@@ -89,13 +226,12 @@
         }
 
         .main-content:hover {
-            transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
         .voice-controls {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 1rem;
             margin-bottom: 2rem;
         }
@@ -126,14 +262,20 @@
 
         .chat-interface {
             display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            flex-direction: row;
             align-items: center;
+            justify-content: flex-start;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
         .microphone-visualizer {
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: var(--secondary-color);
             display: flex;
@@ -141,6 +283,7 @@
             justify-content: center;
             position: relative;
             transition: var(--transition);
+            flex-shrink: 0;
         }
 
         .microphone-visualizer.recording {
@@ -159,7 +302,9 @@
 
         .controls {
             display: flex;
+            flex-direction: row;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -202,23 +347,45 @@
         }
 
         #visualizer {
-            width: 100%;
-            height: 100px;
+            width: 350px;
+            height: 60px;
             background: var(--secondary-color);
             border-radius: 0.75rem;
-            margin: 2rem 0;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
+        .not-recording, .recording, .error {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+        }
+        
+        .not-recording {
+            color: #6B7280;
+            background-color: #F9FAFB;
+        }
+        
+        .recording {
+            color: #DC2626;
+            background-color: #FEE2E2;
+        }
+        
+        .error {
+            color: #DC2626;
+            background-color: #FEE2E2;
+        }
+        
         #transcript {
             background: white;
             border-radius: var(--border-radius);
-            padding: 0.5rem;
-            height: 300px;
+            padding: 1rem;
+            height: 500px;
             overflow-y: auto;
             border: 1px solid #E5E7EB;
-            margin-top: 1rem;
-            line-height: 1.1;
+            line-height: 1.2;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
         .message {
@@ -416,7 +583,179 @@
             background: var(--primary-dark);
             transform: translateY(-2px);
         }
+        
+        /* Tools List Styles */
+        .tools-list {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tools-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .tools-items {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .tool-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .tool-item:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .tool-item i {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin-right: 0.75rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .tool-item span {
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background-color: var(--secondary-color);
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #6B7280;
+            cursor: pointer;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: var(--transition);
+        }
+        
+        .modal-close:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--text-color);
+        }
+        
+        .modal-content {
+            padding: 1.5rem;
+        }
+        
+        .tool-details-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .tool-details-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .tool-details-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+        }
+        
+        .tool-details-description {
+            font-size: 1rem;
+            color: #4B5563;
+            line-height: 1.6;
+            margin: 0 0 1rem 0;
+        }
+        
+        .tool-details-code {
+            background-color: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #1F2937;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin: 0;
+        }
+        
+        .tool-item.active {
+            background-color: var(--secondary-color);
+            font-weight: 500;
+        }
 
+        @media (max-width: 992px) {
+            .two-panel-layout {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                flex: 0 0 auto;
+                width: 100%;
+            }
+        }
+        
         @media (max-width: 768px) {
             .header {
                 flex-direction: row;
@@ -509,6 +848,18 @@
             border-left: 4px solid #EF4444;
         }
     </style>
+
+<script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?f9fe52eabdbd811ef53b8de18c8ca98d";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
+
+
 </head>
 <body>
     <div class="container">
@@ -546,47 +897,95 @@
         </header>
 
         <div id="chat" class="section active">
-            <main class="main-content">
-                <div class="voice-controls">
-                    <button class="voice-btn active" data-voice="tiffany">
-                        <i class="fa fas fa-female"></i>
-                        <span>Tiffany</span>
-                    </button>
-                    <button class="voice-btn" data-voice="matthew">
-                        <i class="fa fas fa-male"></i>
-                        <span>Matthew</span>
-                    </button>
-                </div>
-
-                <div class="chat-interface">
-                    <div class="microphone-visualizer" id="micVisualizer">
-                        <i class="fa fas fa-microphone"></i>
+            <div class="two-panel-layout">
+                <!-- Left Panel with Controls -->
+                <div class="left-panel">
+                    <div class="voice-controls">
+                        <button class="voice-btn active" data-voice="tiffany">
+                            <img src="/static/images/tiffany_miyazaki.png" class="bubble-avatar" style="width:32px;height:32px;margin-right:8px;" alt="Tiffany"> Tiffany
+                        </button>
+                        <button class="voice-btn" data-voice="matthew">
+                            <img src="/static/images/matthew_miyazaki.png" class="bubble-avatar" style="width:32px;height:32px;margin-right:8px;" alt="Matthew"> Matthew
+                        </button>
                     </div>
-
-                    <div class="controls">
-                        <button id="startButton" class="btn btn-primary">
+                    
+                    <div class="tools-list">
+                        <h3 class="tools-title">Available Tools</h3>
+                        <ul class="tools-items">
+                            <li class="tool-item" data-tool="getDateAndTimeTool">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Date and Time</span>
+                            </li>
+                            <li class="tool-item" data-tool="trackOrderTool">
+                                <i class="fas fa-shipping-fast"></i>
+                                <span>Order Tracking</span>
+                            </li>
+                            <li class="tool-item" data-tool="getWeatherTool">
+                                <i class="fas fa-cloud-sun"></i>
+                                <span>Weather</span>
+                            </li>
+                            <li class="tool-item" data-tool="getMoodSuggestionTool">
+                                <i class="fas fa-smile"></i>
+                                <span>Mood Suggestions</span>
+                            </li>
+                            <li class="tool-item" data-tool="searchTool">
+                                <i class="fas fa-search"></i>
+                                <span>Internet Search</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Right Panel with Chat History -->
+                <div class="right-panel">
+                    <div class="chat-interface">
+                        <div class="microphone-visualizer" id="micVisualizer">
                             <i class="fa fas fa-microphone"></i>
-                            Start Talking
+                        </div>
+
+                        <div class="controls">
+                            <button id="startButton" class="btn btn-primary">
+                                <i class="fa fas fa-microphone"></i>
+                                Start Talking
+                            </button>
+                            <button id="stopButton" class="btn btn-secondary" disabled>
+                                <i class="fa fas fa-stop"></i>
+                                Stop Talking
+                            </button>
+                        </div>
+
+                        <div id="status" class="not-recording">Status: Not recording</div>
+                        <div id="visualizer"></div>
+                    </div>
+                    <div id="transcript"></div>
+                </div>
+            </div>
+            
+            <!-- Tool Logs Section -->
+            <div class="tool-logs-section" id="toolLogsSection">
+                <div class="tool-logs-header">
+                    <div class="tool-logs-title">Tool Invocation Logs</div>
+                    <div class="tool-logs-controls">
+                        <button class="btn btn-sm btn-secondary" id="refreshLogsBtn">
+                            <i class="fas fa-sync-alt"></i> Refresh
                         </button>
-                        <button id="stopButton" class="btn btn-secondary" disabled>
-                            <i class="fa fas fa-stop"></i>
-                            Stop Talking
+                        <button class="btn btn-sm btn-secondary" id="clearLogsBtn">
+                            <i class="fas fa-trash"></i> Clear
                         </button>
                     </div>
-
-                    <div id="status" class="not-recording">Status: Not recording</div>
-                    <div id="visualizer"></div>
                 </div>
-            </main>
-
-            <div id="transcript"></div>
+                <div class="tool-logs-list" id="toolLogsList">
+                    <!-- Tool logs will be added here dynamically -->
+                    <div class="empty-logs-message">No tool invocations logged yet.</div>
+                </div>
+            </div>
         </div>
 
         <div id="sample-code" class="section">
             <div class="sample-code">
                 <h2>Sample Code Repository</h2>
                 <p>Explore official AWS samples and examples for Nova Sonic integration</p>
-                <a href="https://github.com/aws-samples/amazon-nova-samples/" target="_blank" class="github-link">
+                <a href="https://github.com/teaguexiao/web-nova-sonic" target="_blank" class="github-link">
                     <i class="fa fab fa-github"></i>
                     View on GitHub
                 </a>
@@ -624,41 +1023,71 @@
         let audioQueue = [];
         let isProcessingAudio = false;
         let audioOutputContext = null;
-        let currentVoice = 'matthew';
+        let currentVoice = 'tiffany';
         let lastUserMessageTime = null;
         let isAssistantSpeaking = false;
         let audioBuffer = [];
         let bufferSize = 0;
         const MAX_BUFFER_SIZE = 4096;
 
+        // Role information structure
+        const roles = {
+            tiffany: {
+                name: "Tiffany",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female"
+            },
+            matthew: {
+                name: "Matthew",
+                avatar: "/static/images/matthew_miyazaki.png",
+                themeClass: "theme-male"
+            }
+        };
+
+
         // Function to add message to transcript
         function addMessageToTranscript(data) {
             const transcriptDiv = document.getElementById('transcript');
-            const role = data.role === 'ASSISTANT' ? 'Assistant' : 'User';
-            const messageDiv = document.createElement('div');
-            messageDiv.className = data.role === 'ASSISTANT' ? 'message assistant-text' : 'message user-text';
-            
-            // Calculate latency for assistant responses
-            let latencyText = '';
-            if (data.role === 'ASSISTANT' && lastUserMessageTime) {
-                const latency = Date.now() - lastUserMessageTime;
-                latencyText = ` (latency: ${latency}ms)`;
-                // Reset lastUserMessageTime after showing latency
-                lastUserMessageTime = null;
-            }
-            
-            // Store timestamp for user messages
-            if (data.role === 'USER') {
-                lastUserMessageTime = Date.now();
-                messageDiv.style.color = '#7C3AED'; // Purple for user
+            const isAssistant = data.role === 'ASSISTANT';
+            const messageRow = document.createElement('div');
+            messageRow.style.display = 'flex';
+            messageRow.style.alignItems = 'flex-end';
+            messageRow.style.marginBottom = '1.2em';
+            if (isAssistant) {
+                // 助手头像在左
+                const avatar = document.createElement('img');
+                avatar.src = roles[currentVoice].avatar;
+                avatar.className = 'bubble-avatar';
+                avatar.alt = 'AI';
+                avatar.style.width = '40px';
+                avatar.style.height = '40px';
+                avatar.style.objectFit = 'cover';
+                avatar.style.marginRight = '0.7em';
+                messageRow.appendChild(avatar);
+                // 气泡
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant-text';
+                messageDiv.innerHTML = data.data;
+                messageRow.appendChild(messageDiv);
             } else {
-                messageDiv.style.color = '#1F2937'; // Dark gray for assistant
+                // 用户头像在右
+                // 气泡
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message user-text';
+                messageDiv.innerHTML = data.data;
+                messageRow.appendChild(messageDiv);
+                // 头像
+                const avatar = document.createElement('img');
+                avatar.src = '/static/images/cat.png';
+                avatar.className = 'bubble-avatar';
+                avatar.alt = 'Me';
+                avatar.style.width = '40px';
+                avatar.style.height = '40px';
+                avatar.style.objectFit = 'cover';
+                avatar.style.marginLeft = '0.7em';
+                messageRow.appendChild(avatar);
             }
-            
-            messageDiv.style.textAlign = 'left';
-            messageDiv.innerHTML = `<strong>[${data.timestamp}]${latencyText} ${role}:</strong> ${data.data}`;
-            
-            transcriptDiv.appendChild(messageDiv);
+            transcriptDiv.appendChild(messageRow);
             
             // Enhanced smooth scrolling behavior
             requestAnimationFrame(() => {
@@ -1104,9 +1533,9 @@
                     document.querySelectorAll('.voice-btn').forEach(btn => {
                         btn.disabled = false;
                         if (btn.dataset.voice === 'tiffany') {
-                            btn.innerHTML = '<i class="fas fa-female"></i> Tiffany';
+                            btn.innerHTML = '<img src="/static/images/tiffany_miyazaki.png" class="bubble-avatar" style="width:32px;height:32px;margin-right:8px;" alt="Tiffany"> Tiffany';
                         } else if (btn.dataset.voice === 'matthew') {
-                            btn.innerHTML = '<i class="fas fa-male"></i> Matthew';
+                            btn.innerHTML = '<img src="/static/images/matthew_miyazaki.png" class="bubble-avatar" style="width:32px;height:32px;margin-right:8px;" alt="Matthew"> Matthew';
                         }
                     });
                 }, 1500); // 1.5 seconds delay
@@ -1167,5 +1596,36 @@
     </script>
     <!-- Add the main.js script for tab functionality -->
     <script src="/static/js/main.js"></script>
+    <!-- Add the tool-logs.js script for tool logging functionality -->
+    <script src="/static/js/tool-logs.js"></script>
+    <!-- Add the tool-details.js script for tool details functionality -->
+    <script src="/static/js/tool-details.js"></script>
+    
+
+    <!-- Tool Details Modal -->
+    <div class="modal-overlay" id="toolDetailsModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalToolTitle">Tool Details</h3>
+                <button class="modal-close" id="closeToolDetailsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="tool-details-section">
+                    <h4 class="tool-details-section-title">Description</h4>
+                    <p class="tool-details-description" id="toolDescription"></p>
+                </div>
+                <div class="tool-details-section">
+                    <h4 class="tool-details-section-title">Sample Input</h4>
+                    <pre class="tool-details-code" id="toolSampleInput"></pre>
+                </div>
+                <div class="tool-details-section">
+                    <h4 class="tool-details-section-title">Sample Output</h4>
+                    <pre class="tool-details-code" id="toolSampleOutput"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 

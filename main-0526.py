@@ -17,6 +17,18 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import secrets
 from typing import Optional
+import pyaudio
+import warnings
+import pytz
+# Suppress warnings
+warnings.filterwarnings("ignore")
+
+# Audio configuration
+INPUT_SAMPLE_RATE = 16000
+OUTPUT_SAMPLE_RATE = 24000
+CHANNELS = 1
+FORMAT = pyaudio.paInt16
+CHUNK_SIZE = 512  # Number of frames per buffer
 
 # Load environment variables from .env file
 load_dotenv()
@@ -124,7 +136,7 @@ async def post_login(
             "username": username,
             "aws_alias": aws_alias,
             "customer_name": customer_name,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(tz=pytz.timezone('Asia/Shanghai')).isoformat()
         }
         
         # Read existing data or create new list
@@ -320,7 +332,7 @@ class StreamManager:
         self.is_active = False
         self.prompt_name = str(uuid.uuid4())
         self.content_name = str(uuid.uuid4())
-        self.text_content_name = str(uuid.uuid4())  # New content name for text
+        self.text_content_name = str(uuid.uuid4())
         self.audio_content_name = str(uuid.uuid4())
         self.role = None
         self.display_assistant_text = False
@@ -336,9 +348,39 @@ class StreamManager:
         self.buffer_size = 0
         self.last_messages = {}
         self.message_cooldown = 2.0
-        self.current_voice = "tiffany"  # Changed default voice to Tiffany
-        self.silence_start_time = None  # Track when silence begins
-        self.silence_threshold = 0.5  # Consider speech ended after 0.5s of silence
+        self.current_voice = "tiffany"
+        self.silence_start_time = None
+        self.silence_threshold = 0.5
+        self.audio_streamer = None  # Will hold the AudioStreamer instance
+
+    def add_audio_chunk(self, audio_bytes):
+        """Add an audio chunk to be sent to Nova Sonic."""
+        if not self.is_active:
+            return
+            
+        try:
+            # Base64 encode the audio data
+            blob = base64.b64encode(audio_bytes)
+            audio_event = AUDIO_EVENT_TEMPLATE % (
+                self.prompt_name,
+                self.audio_content_name,
+                blob.decode('utf-8')
+            )
+            asyncio.create_task(self.send_raw_event(audio_event))
+        except Exception as e:
+            print(f"Error processing audio chunk: {e}")
+
+    async def initialize_direct_audio(self):
+        """Initialize direct audio handling."""
+        if not self.audio_streamer:
+            self.audio_streamer = AudioStreamer(self)
+        await self.audio_streamer.start_streaming()
+
+    async def stop_direct_audio(self):
+        """Stop direct audio handling."""
+        if self.audio_streamer:
+            await self.audio_streamer.stop_streaming()
+            self.audio_streamer = None
 
     def _initialize_client(self):
         try:
@@ -369,20 +411,51 @@ class StreamManager:
             return
             
         print(f"Changing voice from {self.current_voice} to {new_voice}")
+        
+        # Send status update to client
+        try:
+            await self.websocket.send_json({
+                "type": "status",
+                "status": "changing_voice",
+                "message": f"Changing voice to {new_voice}..."
+            })
+        except Exception as e:
+            print(f"Error sending status update: {e}")
+        
+        # Save the new voice before closing the current stream
         self.current_voice = new_voice
         
         # Generate new content names for the new stream
         self.text_content_name = str(uuid.uuid4())
         self.audio_content_name = str(uuid.uuid4())
         
-        # Close current stream
-        await self.close()
-        
-        # Reinitialize with new voice
-        await self.initialize_stream()
-        
-        # Restart audio streaming
-        await self.send_audio_content_start_event()
+        try:
+            # Close current stream
+            await self.close()
+            
+            # Reinitialize with new voice
+            await self.initialize_stream()
+            
+            # Restart audio streaming
+            await self.send_audio_content_start_event()
+            
+            # Notify client that voice change is complete
+            await self.websocket.send_json({
+                "type": "status",
+                "status": "voice_changed",
+                "message": f"Voice changed to {new_voice}"
+            })
+            
+        except Exception as e:
+            print(f"Error during voice change: {e}")
+            # Try to notify client of error
+            try:
+                await self.websocket.send_json({
+                    "type": "error",
+                    "message": f"Failed to change voice: {str(e)}"
+                })
+            except:
+                pass
 
     async def initialize_stream(self):
         """Initialize the bidirectional stream."""
@@ -818,6 +891,24 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
                     if not await stream_manager.send_raw_event(audio_event):
                         print(f"Failed to send audio event for client #{client_id}, closing connection")
                         break
+                
+                elif data["type"] == "barge_in":
+                    # Handle barge-in by setting the flag
+                    print(f"Barge-in detected for client #{client_id}")
+                    stream_manager.barge_in = True
+                    # Clear any pending audio in the queue
+                    while not stream_manager.audio_output_queue.empty():
+                        try:
+                            stream_manager.audio_output_queue.get_nowait()
+                        except asyncio.QueueEmpty:
+                            break
+                    
+                    # Send status update to client
+                    await websocket.send_json({
+                        "type": "status",
+                        "status": "barge_in_handled",
+                        "message": "Barge-in detected and handled"
+                    })
                     
                 elif data["type"] == "voice_change":
                     # Handle voice change request
@@ -854,6 +945,212 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
                 # Always remove from active connections
                 del active_connections[client_id]
                 print(f"Client #{client_id} connection cleaned up")
+
+class AudioStreamer:
+    """Handles continuous microphone input and audio output using separate streams."""
+    
+    def __init__(self, stream_manager):
+        self.stream_manager = stream_manager
+        self.is_streaming = False
+        self.loop = asyncio.get_event_loop()
+
+        # Initialize PyAudio
+        print("AudioStreamer Initializing PyAudio...")
+        self.p = pyaudio.PyAudio()
+
+        # Initialize separate streams for input and output
+        # Input stream with callback for microphone
+        print("Opening input audio stream...")
+        self.input_stream = self.p.open(
+            format=FORMAT,
+            channels=CHANNELS,
+            rate=INPUT_SAMPLE_RATE,
+            input=True,
+            frames_per_buffer=CHUNK_SIZE,
+            stream_callback=self.input_callback
+        )
+
+        # Output stream for direct writing (no callback)
+        print("Opening output audio stream...")
+        self.output_stream = self.p.open(
+            format=FORMAT,
+            channels=CHANNELS,
+            rate=OUTPUT_SAMPLE_RATE,
+            output=True,
+            frames_per_buffer=CHUNK_SIZE
+        )
+
+    def input_callback(self, in_data, frame_count, time_info, status):
+        """Callback function that schedules audio processing in the asyncio event loop"""
+        if self.is_streaming and in_data:
+            # Schedule the task in the event loop
+            asyncio.run_coroutine_threadsafe(
+                self.process_input_audio(in_data), 
+                self.loop
+            )
+        return (None, pyaudio.paContinue)
+
+    async def process_input_audio(self, audio_data):
+        """Process a single audio chunk directly"""
+        try:
+            # Send audio to stream manager
+            self.stream_manager.add_audio_chunk(audio_data)
+        except Exception as e:
+            if self.is_streaming:
+                print(f"Error processing input audio: {e}")
+    
+    async def play_output_audio(self):
+        """Play audio responses from Nova Sonic"""
+        while self.is_streaming:
+            try:
+                # Check for barge-in flag
+                if self.stream_manager.barge_in:
+                    # Clear the audio queue
+                    while not self.stream_manager.audio_output_queue.empty():
+                        try:
+                            self.stream_manager.audio_output_queue.get_nowait()
+                        except asyncio.QueueEmpty:
+                            break
+                    self.stream_manager.barge_in = False
+                    await asyncio.sleep(0.05)
+                    continue
+                
+                # Get audio data from the stream manager's queue
+                audio_data = await asyncio.wait_for(
+                    self.stream_manager.audio_output_queue.get(),
+                    timeout=0.1
+                )
+                
+                if audio_data and self.is_streaming:
+                    # Write directly to the output stream in smaller chunks
+                    chunk_size = CHUNK_SIZE
+                    for i in range(0, len(audio_data), chunk_size):
+                        if not self.is_streaming:
+                            break
+                        
+                        end = min(i + chunk_size, len(audio_data))
+                        chunk = audio_data[i:end]
+                        
+                        # Write chunk to output stream
+                        await asyncio.get_event_loop().run_in_executor(
+                            None, 
+                            self.output_stream.write,
+                            chunk
+                        )
+                        
+                        await asyncio.sleep(0.001)
+                    
+            except asyncio.TimeoutError:
+                continue
+            except Exception as e:
+                if self.is_streaming:
+                    print(f"Error playing output audio: {str(e)}")
+                await asyncio.sleep(0.05)
+    
+    async def start_streaming(self):
+        """Start streaming audio."""
+        if self.is_streaming:
+            return
+        
+        print("Starting audio streaming...")
+        
+        # Send audio content start event
+        await self.stream_manager.send_audio_content_start_event()
+        
+        self.is_streaming = True
+        
+        # Start the input stream if not already started
+        if not self.input_stream.is_active():
+            self.input_stream.start_stream()
+        
+        # Start processing output audio
+        self.output_task = asyncio.create_task(self.play_output_audio())
+    
+    async def stop_streaming(self):
+        """Stop streaming audio."""
+        if not self.is_streaming:
+            return
+            
+        self.is_streaming = False
+
+        # Cancel the output task
+        if hasattr(self, 'output_task') and not self.output_task.done():
+            self.output_task.cancel()
+            await asyncio.gather(self.output_task, return_exceptions=True)
+        
+        # Stop and close the streams
+        if self.input_stream:
+            if self.input_stream.is_active():
+                self.input_stream.stop_stream()
+            self.input_stream.close()
+        
+        if self.output_stream:
+            if self.output_stream.is_active():
+                self.output_stream.stop_stream()
+            self.output_stream.close()
+        
+        if self.p:
+            self.p.terminate()
+
+@app.post("/start_direct_audio")
+async def start_direct_audio(request: Request, session: Optional[str] = Cookie(None)):
+    if not verify_session(session):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    client_id = str(uuid.uuid4())
+    stream_manager = StreamManager(None, client_id)  # No WebSocket needed for direct audio
+    active_connections[client_id] = stream_manager
+    
+    try:
+        # Initialize the stream
+        await stream_manager.initialize_stream()
+        # Initialize direct audio
+        await stream_manager.initialize_direct_audio()
+        
+        return {"status": "success", "client_id": client_id}
+    except Exception as e:
+        if client_id in active_connections:
+            del active_connections[client_id]
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/stop_direct_audio/{client_id}")
+async def stop_direct_audio(client_id: str, session: Optional[str] = Cookie(None)):
+    if not verify_session(session):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    if client_id not in active_connections:
+        raise HTTPException(status_code=404, detail="Stream not found")
+    
+    stream_manager = active_connections[client_id]
+    try:
+        await stream_manager.stop_direct_audio()
+        await stream_manager.close()
+        del active_connections[client_id]
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/timeline")
+async def get_timeline(request: Request, session: Optional[str] = Cookie(None)):
+    if not verify_session(session):
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("timeline.html", {"request": request})
+
+@app.get("/timeline-data")
+async def get_timeline_data(session: Optional[str] = Cookie(None)):
+    if not verify_session(session):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    try:
+        with open("aws_info.txt", "r") as f:
+            data = json.load(f)
+            if not isinstance(data, list):
+                data = [data]  # Convert single object to list
+            return data
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError:
+        return []
 
 if __name__ == "__main__":
     import uvicorn

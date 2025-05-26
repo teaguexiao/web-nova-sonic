@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Info Timeline</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f8fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .timeline-point {
+            fill: #3498db;
+            transition: r 0.2s ease;
+            cursor: pointer;
+        }
+        .timeline-point:hover {
+            fill: #2980b9;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            max-width: 300px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .axis-label {
+            font-size: 12px;
+            fill: #7f8c8d;
+        }
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #34495e;
+            padding: 5px 10px;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .legend-item:hover {
+            background-color: #e9ecef;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #2c3e50;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+        }
+        .nav-bar a:hover {
+            background-color: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="/">Home</a>
+            <a href="/logout">Logout</a>
+        </div>
+        <h1>AWS Information Timeline</h1>
+        <div id="timeline"></div>
+        <div id="legend" class="legend"></div>
+    </div>
+
+    <script>
+        function createVisualization(data) {
+            // Set up dimensions
+            const margin = {top: 50, right: 50, bottom: 50, left: 50};
+            const width = Math.min(1100, window.innerWidth - 40) - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
+
+            // Create SVG
+            const svg = d3.select("#timeline")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Create scales
+            const timeExtent = d3.extent(data, d => new Date(d.timestamp));
+            const xScale = d3.scaleTime()
+                .domain(timeExtent)
+                .range([0, width]);
+
+            // Create axes
+            const xAxis = d3.axisBottom(xScale)
+                .ticks(width > 600 ? 10 : 5)
+                .tickSizeOuter(0);
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(xAxis)
+                .selectAll("text")
+                .style("font-size", "12px");
+
+            // Create tooltip
+            const tooltip = d3.select("body")
+                .append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+            // Create unique customer list for colors
+            const customers = [...new Set(data.map(d => d.aws_alias))];
+            const colorScale = d3.scaleOrdinal()
+                .domain(customers)
+                .range(d3.schemeCategory10);
+
+            // Add points
+            svg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("class", "timeline-point")
+                .attr("cx", d => xScale(new Date(d.timestamp)))
+                .attr("cy", height/2)
+                .attr("r", 6)
+                .attr("fill", d => colorScale(d.aws_alias))
+                .on("mouseover", function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr("r", 8);
+                    
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    
+                    tooltip.html(`
+                        <strong>Customer:</strong> ${d.customer_name}<br/>
+                        <strong>AWS Alias:</strong> ${d.aws_alias}<br/>
+                        <strong>Time:</strong> ${new Date(d.timestamp).toLocaleString()}
+                    `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function() {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr("r", 6);
+                    
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            // Create legend
+            const legend = d3.select("#legend");
+            
+            const legendItems = legend.selectAll(".legend-item")
+                .data(customers)
+                .enter()
+                .append("div")
+                .attr("class", "legend-item")
+                .on("mouseover", function(event, d) {
+                    svg.selectAll("circle")
+                        .transition()
+                        .duration(200)
+                        .attr("opacity", dd => dd.aws_alias === d ? 1 : 0.2);
+                })
+                .on("mouseout", function() {
+                    svg.selectAll("circle")
+                        .transition()
+                        .duration(200)
+                        .attr("opacity", 1);
+                });
+
+            legendItems.append("span")
+                .style("display", "inline-block")
+                .style("width", "12px")
+                .style("height", "12px")
+                .style("background-color", d => colorScale(d))
+                .style("border-radius", "50%");
+
+            legendItems.append("span")
+                .text(d => d);
+
+            // Add responsive behavior
+            function resize() {
+                const newWidth = Math.min(1100, window.innerWidth - 40) - margin.left - margin.right;
+                svg.attr("width", newWidth + margin.left + margin.right);
+                xScale.range([0, newWidth]);
+                svg.selectAll("circle")
+                    .attr("cx", d => xScale(new Date(d.timestamp)));
+                svg.select(".x-axis").call(xAxis);
+            }
+
+            window.addEventListener("resize", resize);
+        }
+
+        // Load the data from the JSON file
+        fetch('/timeline-data')
+            .then(response => response.json())
+            .then(jsonData => {
+                createVisualization(jsonData);
+            })
+            .catch(error => console.error('Error loading the data:', error));
+    </script>
+</body>
+</html> 
