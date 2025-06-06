@@ -20,7 +20,8 @@ class ToolManager:
             "trackOrderTool": self.track_order,
             "getWeatherTool": self.get_weather,
             "getMoodSuggestionTool": self.get_mood_suggestion,
-            "searchTool": self.search
+            "searchTool": self.search,
+            "speakerControlTool": self.speaker_control
         }
         
         # Initialize tool logs list
@@ -95,6 +96,24 @@ class ToolManager:
             "required": ["query"]
         })
         
+        speaker_control_schema = json.dumps({
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "description": "The action to perform on the speaker",
+                    "enum": ["on", "off", "volume_up", "volume_down", "status"],
+                    "default": "status"
+                },
+                "deviceId": {
+                    "type": "string",
+                    "description": "The ID of the speaker device to control",
+                    "default": "living_room_speaker"
+                }
+            },
+            "required": ["action"]
+        })
+        
         return [
             {
                 "toolSpec": {
@@ -140,6 +159,15 @@ class ToolManager:
                         "json": get_search_schema
                     }
                 }
+            },
+            {
+                "toolSpec": {
+                    "name": "speakerControlTool",
+                    "description": "Control a smart speaker at home with functions like on, off, volume up, and volume down",
+                    "inputSchema": {
+                        "json": speaker_control_schema
+                    }
+                }
             }
         ]
     
@@ -153,8 +181,8 @@ class ToolManager:
             tool_function = self.tools[tool_name]
             
             # Check if the tool function is asynchronous or synchronous
-            if tool_name == "searchTool":
-                # Handle synchronous search tool
+            if tool_name in ["searchTool", "speakerControlTool"]:
+                # Handle synchronous tools
                 result = tool_function(tool_use_content)
             else:
                 # Handle asynchronous tools
@@ -640,3 +668,120 @@ class ToolManager:
                 "error": str(e),
                 "status": "failed"
             }
+            
+    def speaker_control(self, tool_use_content: Dict[str, Any]) -> Dict[str, Any]:
+        """Control a smart speaker at home with functions like on, off, volume up, and volume down.
+        
+        This is a simulated IoT device control function that demonstrates how to control
+        a smart speaker in a home environment. In a real implementation, this would connect
+        to an actual IoT device API.
+        """
+        # Parse the content field if it exists and is a JSON string
+        content = tool_use_content.get("content", "")
+        if content and isinstance(content, str):
+            try:
+                # Try to parse the content as JSON
+                content_json = json.loads(content)
+                if isinstance(content_json, dict):
+                    # Extract parameters from the parsed JSON
+                    action = content_json.get("action", "status")
+                    device_id = content_json.get("deviceId", "living_room_speaker")
+                else:
+                    action = "status"
+                    device_id = "living_room_speaker"
+            except json.JSONDecodeError:
+                # If content is not valid JSON, use default values
+                action = "status"
+                device_id = "living_room_speaker"
+        else:
+            # Fallback to direct parameters
+            action = tool_use_content.get("action", "status")
+            device_id = tool_use_content.get("deviceId", "living_room_speaker")
+        
+        # Simulated speaker state storage
+        # In a real implementation, this would be fetched from a database or the device itself
+        # For this demo, we'll use a simple in-memory state that persists during the lifetime of the object
+        if not hasattr(self, "_speaker_states"):
+            self._speaker_states = {
+                "living_room_speaker": {
+                    "power": False,  # False = off, True = on
+                    "volume": 5,      # Volume level 0-10
+                    "name": "Living Room Speaker",
+                    "type": "Smart Speaker",
+                    "brand": "NovaSound",
+                    "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                },
+                "bedroom_speaker": {
+                    "power": False,
+                    "volume": 3,
+                    "name": "Bedroom Speaker",
+                    "type": "Smart Speaker",
+                    "brand": "NovaSound",
+                    "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                },
+                "kitchen_speaker": {
+                    "power": False,
+                    "volume": 4,
+                    "name": "Kitchen Speaker",
+                    "type": "Smart Speaker",
+                    "brand": "NovaSound",
+                    "last_updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+            }
+        
+        # Check if the device exists
+        if device_id not in self._speaker_states:
+            return {
+                "error": f"Device not found: {device_id}",
+                "status": "failed",
+                "available_devices": list(self._speaker_states.keys())
+            }
+        
+        # Get the current state of the speaker
+        speaker_state = self._speaker_states[device_id]
+        
+        # Update the state based on the action
+        if action == "on":
+            speaker_state["power"] = True
+            message = f"Turned on {speaker_state['name']}"
+        elif action == "off":
+            speaker_state["power"] = False
+            message = f"Turned off {speaker_state['name']}"
+        elif action == "volume_up":
+            if speaker_state["volume"] < 10:
+                speaker_state["volume"] += 1
+                message = f"Increased volume of {speaker_state['name']} to {speaker_state['volume']}"
+            else:
+                message = f"{speaker_state['name']} is already at maximum volume"
+        elif action == "volume_down":
+            if speaker_state["volume"] > 0:
+                speaker_state["volume"] -= 1
+                message = f"Decreased volume of {speaker_state['name']} to {speaker_state['volume']}"
+            else:
+                message = f"{speaker_state['name']} is already at minimum volume"
+        elif action == "status":
+            power_status = "on" if speaker_state["power"] else "off"
+            message = f"{speaker_state['name']} is currently {power_status} with volume level {speaker_state['volume']}"
+        else:
+            return {
+                "error": f"Unknown action: {action}",
+                "status": "failed",
+                "available_actions": ["on", "off", "volume_up", "volume_down", "status"]
+            }
+        
+        # Update the last updated timestamp
+        speaker_state["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Return the updated state
+        return {
+            "device_id": device_id,
+            "name": speaker_state["name"],
+            "power": speaker_state["power"],
+            "power_status": "on" if speaker_state["power"] else "off",
+            "volume": speaker_state["volume"],
+            "brand": speaker_state["brand"],
+            "type": speaker_state["type"],
+            "message": message,
+            "last_updated": speaker_state["last_updated"],
+            "status": "success"
+        }

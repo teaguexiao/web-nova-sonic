@@ -21,6 +21,19 @@ Nova Sonic 是一个基于 Amazon Bedrock Nova 的实时语音交互演示项目
   - 语言教学（口语老师）
   - Role Play 互动
 
+### 🛠️ 安装前提条件
+
+在安装本项目前，请确保安装以下系统依赖：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y portaudio19-dev python3-dev
+sudo apt install python3.12-venv
+python3.12 -m venv venv
+source venv/bin/activate
+pip3.12 install -r requirements.txt
+```
+
 ### 🌐 在线演示
 
 访问我们的演示网站：[Nova Sonic Demo](https://nova-sonic.teague.live/)

@@ -21,6 +21,19 @@ Nova Sonic is a real-time voice interaction demonstration project based on Amazo
   - Language teaching (oral English teachers)
   - Role-playing scenarios
 
+### 🛠️ Installation Prerequisites
+
+Before installing this project, please ensure you have the following system dependencies installed:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y portaudio19-dev python3-dev
+sudo apt install python3.12-venv
+python3.12 -m venv venv
+source venv/bin/activate
+pip3.12 install -r requirements.txt
+```
+
 ### 🌐 Live Demo
 
 Visit our demo website: [Nova Sonic Demo](https://nova-sonic.teague.live/)

@@ -103,6 +103,25 @@ const toolDetailsData = {
   ],
   "status": "success"
 }`
+    },
+    speakerControlTool: {
+        description: "Control a smart speaker at home with functions like on, off, volume up, and volume down. Provides real-time status information about the speaker.",
+        sampleInput: `{
+  "action": "volume_up",
+  "deviceId": "living_room_speaker"
+}`,
+        sampleOutput: `{
+  "device_id": "living_room_speaker",
+  "name": "Living Room Speaker",
+  "power": true,
+  "power_status": "on",
+  "volume": 6,
+  "brand": "NovaSound",
+  "type": "Smart Speaker",
+  "message": "Increased volume of Living Room Speaker to 6",
+  "last_updated": "2025-05-27 10:40:15",
+  "status": "success"
+}`
     }
 };
 
@@ -121,7 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
         trackOrderTool: 'Order Tracking Tool',
         getWeatherTool: 'Weather Tool',
         getMoodSuggestionTool: 'Mood Suggestion Tool',
-        searchTool: 'Internet Search Tool'
+        searchTool: 'Internet Search Tool',
+        speakerControlTool: 'Speaker Control Tool'
     };
     
     // Function to show tool details modal
