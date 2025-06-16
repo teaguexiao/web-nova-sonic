@@ -21,6 +21,17 @@ Nova Sonic 是一个基于 Amazon Bedrock Nova 的实时语音交互演示项目
   - 语言教学（口语老师）
   - Role Play 互动
 
+### 🔧 支持的工具
+
+Nova Sonic 目前支持以下工具：
+
+- **getDateAndTimeTool**：获取当前日期和时间信息
+- **trackOrderTool**：通过订单ID检索实时订单跟踪信息和详细状态更新，提供预计送达日期
+- **getWeatherTool**：获取指定位置的当前天气信息
+- **getMoodSuggestionTool**：根据当前情绪状态获取个性化建议以改善心情
+- **searchTool**：搜索互联网获取实时信息和问题答案
+- **speakerControlTool**：控制家中的智能音箱，支持开关、音量调节等功能
+
 ### 🛠️ 安装前提条件
 
 在安装本项目前，请确保安装以下系统依赖：

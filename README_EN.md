@@ -21,6 +21,17 @@ Nova Sonic is a real-time voice interaction demonstration project based on Amazo
   - Language teaching (oral English teachers)
   - Role-playing scenarios
 
+### 🔧 Supported Tools
+
+Nova Sonic currently supports the following tools:
+
+- **getDateAndTimeTool**: Get information about the current date and time
+- **trackOrderTool**: Retrieves real-time order tracking information and detailed status updates for customer orders by order ID, providing estimated delivery dates
+- **getWeatherTool**: Get current weather information for a specified location
+- **getMoodSuggestionTool**: Get personalized suggestions to improve mood or emotional state based on current feelings
+- **searchTool**: Search the internet for real-time information and answers to questions
+- **speakerControlTool**: Control a smart speaker at home with functions like on, off, volume up, and volume down
+
 ### 🛠️ Installation Prerequisites
 
 Before installing this project, please ensure you have the following system dependencies installed:
