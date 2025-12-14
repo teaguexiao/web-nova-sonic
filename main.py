@@ -10,8 +10,8 @@ from pathlib import Path
 import uuid
 from aws_sdk_bedrock_runtime.client import BedrockRuntimeClient, InvokeModelWithBidirectionalStreamOperationInput
 from aws_sdk_bedrock_runtime.models import InvokeModelWithBidirectionalStreamInputChunk, BidirectionalInputPayloadPart
-from aws_sdk_bedrock_runtime.config import Config, HTTPAuthSchemeResolver, SigV4AuthScheme
-from smithy_aws_core.credentials_resolvers.environment import EnvironmentCredentialsResolver
+from aws_sdk_bedrock_runtime.config import Config
+from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
 import time
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -32,7 +32,7 @@ INPUT_SAMPLE_RATE = 16000
 OUTPUT_SAMPLE_RATE = 24000
 CHANNELS = 1
 FORMAT = pyaudio.paInt16
-CHUNK_SIZE = 512  # Number of frames per buffer
+CHUNK_SIZE = 1024  # Number of frames per buffer
 # Initialize the tool manager
 tool_manager = ToolManager()
 
@@ -209,7 +209,7 @@ async def logout(response: Response, session: Optional[str] = Cookie(None)):
     return response
 
 # Nova Sonic configuration
-MODEL_ID = 'amazon.nova-sonic-v1:0'
+MODEL_ID = 'amazon.nova-2-sonic-v1:0'
 REGION = 'us-east-1'
 
 # Event templates
@@ -376,8 +376,8 @@ class StreamManager:
         self.audio_task = None
         self.last_user_audio_time = None
         self.first_assistant_response_time = None
-        self.audio_chunk_size = 2048
-        self.max_buffer_size = 4096
+        self.audio_chunk_size = 1024  # Match CHUNK_SIZE
+        self.max_buffer_size = 1024  # Reduced buffer size for lower latency
         self.audio_buffer = []
         self.buffer_size = 0
         self.last_messages = {}
@@ -431,8 +431,6 @@ class StreamManager:
                 endpoint_uri=f"https://bedrock-runtime.{REGION}.amazonaws.com",
                 region=REGION,
                 aws_credentials_identity_resolver=EnvironmentCredentialsResolver(),
-                http_auth_scheme_resolver=HTTPAuthSchemeResolver(),
-                http_auth_schemes={"aws.auth#sigv4": SigV4AuthScheme()}
             )
             self.bedrock_client = BedrockRuntimeClient(config=config)
             print("AWS Bedrock client initialized successfully")
@@ -442,7 +440,19 @@ class StreamManager:
 
     async def change_voice(self, new_voice):
         """Change the voice and reinitialize the stream."""
-        if new_voice not in ["matthew", "tiffany"]:
+        # All supported voice IDs from Nova Sonic 2
+        valid_voices = [
+            "matthew", "tiffany",  # Polyglot English voices
+            "amy", "olivia",       # English voices
+            "lupe", "carlos",      # Spanish voices
+            "ambre", "florian",    # French voices
+            "tina", "lennart",     # German voices
+            "beatrice", "lorenzo", # Italian voices
+            "carolina", "leo",     # Portuguese voices
+            "arjun", "kiara"       # Hindi voices
+        ]
+
+        if new_voice not in valid_voices:
             print(f"Invalid voice {new_voice}, keeping current voice {self.current_voice}")
             return
             
@@ -796,7 +806,7 @@ class StreamManager:
                     self.buffer_size = 0
                     self.barge_in = False
                     print(f"Cleared audio buffer for client #{self.client_id} due to barge-in")
-                    await asyncio.sleep(0.01)
+                    await asyncio.sleep(0.05)  # Increased from 0.01 to match sample code
                     continue
 
                 try:
@@ -1108,7 +1118,7 @@ class AudioStreamer:
                         except asyncio.QueueEmpty:
                             break
                     self.stream_manager.barge_in = False
-                    await asyncio.sleep(0.05)
+                    await asyncio.sleep(0.05)  # Matches sample code timing
                     continue
                 
                 # Get audio data from the stream manager's queue

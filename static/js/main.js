@@ -67,8 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let mediaRecorder = null;
     let audioContext = null;
     let audioQueue = [];
+    let currentAudioSource = null;  // Track current playing audio source
     let isRecording = false;
     let clientId = null;
+    let hasBargedIn = false;  // Track if barge-in signal has been sent
     
     // Function to show status messages
     function showStatus(message, type = 'info') {
@@ -199,30 +201,53 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Function to clear audio queue (for barge-in)
+    function clearAudioQueue() {
+        // Stop currently playing audio
+        if (currentAudioSource) {
+            try {
+                currentAudioSource.stop();
+            } catch (e) {
+                // Audio might already be stopped
+            }
+            currentAudioSource = null;
+        }
+
+        // Clear the queue
+        audioQueue = [];
+        console.log('[Barge-in] Audio queue cleared due to user speech');
+    }
+
     // Function to play next audio in queue
     function playNextAudio() {
-        if (audioQueue.length === 0) return;
-        
+        if (audioQueue.length === 0) {
+            currentAudioSource = null;
+            return;
+        }
+
         const audioBuffer = audioQueue[0];
-        
+
         audioContext.decodeAudioData(audioBuffer, (buffer) => {
             const source = audioContext.createBufferSource();
+            currentAudioSource = source;  // Track the current source
             source.buffer = buffer;
             source.connect(audioContext.destination);
-            
+
             source.onended = () => {
                 // Remove played audio from queue
+                currentAudioSource = null;
                 audioQueue.shift();
-                
+
                 // Play next audio if available
                 if (audioQueue.length > 0) {
                     playNextAudio();
                 }
             };
-            
+
             source.start(0);
         }, (error) => {
             console.error('Error decoding audio data:', error);
+            currentAudioSource = null;
             audioQueue.shift();
             if (audioQueue.length > 0) {
                 playNextAudio();
@@ -241,11 +266,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0 && ws && ws.readyState === WebSocket.OPEN) {
+                    // On first audio data or if there's audio playing, trigger barge-in
+                    if (!hasBargedIn && (audioQueue.length > 0 || currentAudioSource)) {
+                        // Clear audio queue when user starts speaking (barge-in)
+                        clearAudioQueue();
+
+                        // Send barge-in signal to server
+                        ws.send(JSON.stringify({
+                            type: 'barge_in'
+                        }));
+
+                        hasBargedIn = true;
+                        console.log('[Barge-in] Signal sent to server');
+                    }
+
                     // Convert blob to base64
                     const reader = new FileReader();
                     reader.onloadend = function() {
                         const base64data = reader.result.split(',')[1];
-                        
+
                         // Send audio data to server
                         ws.send(JSON.stringify({
                             type: 'audio',
@@ -278,18 +317,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function stopRecording() {
         if (mediaRecorder && isRecording) {
             mediaRecorder.stop();
-            
+
             // Stop all tracks
             mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            
+
             isRecording = false;
+            hasBargedIn = false;  // Reset barge-in flag
             startButton.disabled = false;
             stopButton.disabled = true;
             if (micVisualizer) {
                 micVisualizer.classList.remove('recording');
             }
             statusElement.textContent = 'Status: Not recording';
-            
+
             showStatus('Recording stopped', 'info');
         }
     }
