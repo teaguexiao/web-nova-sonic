@@ -866,6 +866,55 @@
             color: #991B1B;
             border-left: 4px solid #EF4444;
         }
+
+        /* Nova Sonic 2 Feature Modal Styles */
+        .feature-intro {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #374151;
+        }
+
+        .feature-intro p {
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 1.5rem 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #E5E7EB;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .feature-list li strong {
+            color: var(--text-color);
+        }
+
+        .learn-more {
+            margin-top: 1.5rem;
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid #E5E7EB;
+        }
     </style>
 
 <script>
@@ -967,13 +1016,9 @@
                         </div>
 
                         <div class="controls">
-                            <button id="startButton" class="btn btn-primary">
+                            <button id="toggleButton" class="btn btn-primary">
                                 <i class="fa fas fa-microphone"></i>
-                                Start Talking
-                            </button>
-                            <button id="stopButton" class="btn btn-secondary" disabled>
-                                <i class="fa fas fa-stop"></i>
-                                Stop Talking
+                                <span id="toggleButtonText">Start Talking</span>
                             </button>
                         </div>
 
@@ -1272,12 +1317,12 @@
             
             ws.onopen = () => {
                 console.log('WebSocket connected');
-                document.getElementById('startButton').disabled = false;
+                document.getElementById('toggleButton').disabled = false;
             };
-            
+
             ws.onclose = () => {
                 console.log('WebSocket disconnected');
-                document.getElementById('startButton').disabled = true;
+                document.getElementById('toggleButton').disabled = true;
                 stopRecording();
             };
             
@@ -1450,8 +1495,17 @@
                 await initializeAudio();
             }
             isRecording = true;
-            document.getElementById('startButton').disabled = true;
-            document.getElementById('stopButton').disabled = false;
+
+            // Update toggle button to Stop state
+            const toggleButton = document.getElementById('toggleButton');
+            const toggleButtonText = document.getElementById('toggleButtonText');
+            const toggleButtonIcon = toggleButton.querySelector('i');
+
+            toggleButton.classList.remove('btn-primary');
+            toggleButton.classList.add('btn-secondary');
+            toggleButtonIcon.className = 'fa fas fa-stop';
+            toggleButtonText.textContent = 'Stop Talking';
+
             document.getElementById('status').textContent = 'Status: Recording';
             document.getElementById('status').className = 'recording';
             micVisualizer.classList.add('recording');
@@ -1461,10 +1515,19 @@
         // Stop recording
         async function stopRecording() {
             if (!isRecording) return;
-            
+
             isRecording = false;
-            document.getElementById('startButton').disabled = false;
-            document.getElementById('stopButton').disabled = true;
+
+            // Update toggle button to Start state
+            const toggleButton = document.getElementById('toggleButton');
+            const toggleButtonText = document.getElementById('toggleButtonText');
+            const toggleButtonIcon = toggleButton.querySelector('i');
+
+            toggleButton.classList.remove('btn-secondary');
+            toggleButton.classList.add('btn-primary');
+            toggleButtonIcon.className = 'fa fas fa-microphone';
+            toggleButtonText.textContent = 'Start Talking';
+
             document.getElementById('status').textContent = 'Status: Not recording';
             document.getElementById('status').className = 'not-recording';
             micVisualizer.classList.remove('recording');
@@ -1540,9 +1603,12 @@
         }
 
         // Set up event listeners
-        document.getElementById('startButton').addEventListener('click', startRecording);
-        document.getElementById('stopButton').addEventListener('click', () => {
-            stopRecording().catch(console.error);
+        document.getElementById('toggleButton').addEventListener('click', () => {
+            if (isRecording) {
+                stopRecording().catch(console.error);
+            } else {
+                startRecording();
+            }
         });
 
         // Initialize WebSocket connection when page loads
@@ -1645,6 +1711,29 @@
                 navTabs.classList.remove('show');
             });
         });
+
+        // Nova Sonic 2 Feature Modal Control
+        window.addEventListener('DOMContentLoaded', () => {
+            const novaSonic2Modal = document.getElementById('novaSonic2Modal');
+            const closeNovaSonic2Modal = document.getElementById('closeNovaSonic2Modal');
+
+            // 每次登录后都显示弹窗,延迟500ms让页面先加载完成
+            setTimeout(() => {
+                novaSonic2Modal.classList.add('active');
+            }, 500);
+
+            // 关闭按钮事件
+            closeNovaSonic2Modal.addEventListener('click', () => {
+                novaSonic2Modal.classList.remove('active');
+            });
+
+            // 点击遮罩层关闭弹窗
+            novaSonic2Modal.addEventListener('click', (e) => {
+                if (e.target === novaSonic2Modal) {
+                    novaSonic2Modal.classList.remove('active');
+                }
+            });
+        });
     </script>
     <!-- Add the main.js script for tab functionality -->
     <script src="/static/js/main.js"></script>
@@ -1675,6 +1764,41 @@
                 <div class="tool-details-section">
                     <h4 class="tool-details-section-title">Sample Output</h4>
                     <pre class="tool-details-code" id="toolSampleOutput"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nova Sonic 2 Feature Announcement Modal -->
+    <div class="modal-overlay" id="novaSonic2Modal">
+        <div class="modal-container" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">🎉 Nova Sonic 2 现已支持!</h3>
+                <button class="modal-close" id="closeNovaSonic2Modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="feature-intro">
+                    <p>本Demo页面已经升级支持Amazon Nova Sonic 2,提供以下核心功能:</p>
+                    <ul class="feature-list">
+                        <li><strong>低延迟实时对话:</strong> 实现流畅的实时语音交互体验</li>
+                        <li><strong>多语言语音理解:</strong> 支持多种语言和说话风格的语音识别</li>
+                        <li><strong>22种表现力丰富的语音:</strong> 包括英语、西班牙语、德语、法语、意大利语、葡萄牙语和印地语的多种男女声音</li>
+                        <li><strong>自然流畅的对话处理:</strong> 能够理解和适应用户语音中的停顿、犹豫和打断,并在整个交互过程中保持对话上下文</li>
+                        <li><strong>跨模态输入:</strong> 支持在同一会话中使用文本消息与AI对话,无需切换上下文</li>
+                        <li><strong>工具调用能力:</strong> 基于企业特定数据提供精准响应,执行智能工作流程(如预订服务)</li>
+                        <li><strong>异步任务处理:</strong> 用户可以在工具在后台执行操作时继续对话</li>
+                    </ul>
+
+                    <div class="learn-more">
+                        <a href="https://docs.aws.amazon.com/ai/responsible-ai/nova-2-sonic/overview.html"
+                           target="_blank"
+                           class="pricing-link">
+                            <i class="fas fa-book"></i>
+                            查看详细文档
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
