@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentAudioSource = null;  // Track current playing audio source
     let isRecording = false;
     let clientId = null;
-    let hasBargedIn = false;  // Track if barge-in signal has been sent
+    let lastBargeInTime = 0;  // Track last barge-in time to avoid spam
     
     // Function to show status messages
     function showStatus(message, type = 'info') {
@@ -266,8 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0 && ws && ws.readyState === WebSocket.OPEN) {
-                    // On first audio data or if there's audio playing, trigger barge-in
-                    if (!hasBargedIn && (audioQueue.length > 0 || currentAudioSource)) {
+                    // Check if AI is currently speaking (audio playing or queued)
+                    const now = Date.now();
+                    if ((audioQueue.length > 0 || currentAudioSource) && (now - lastBargeInTime > 500)) {
                         // Clear audio queue when user starts speaking (barge-in)
                         clearAudioQueue();
 
@@ -276,8 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             type: 'barge_in'
                         }));
 
-                        hasBargedIn = true;
-                        console.log('[Barge-in] Signal sent to server');
+                        lastBargeInTime = now;
+                        console.log('[Barge-in] Signal sent to server, audio queue cleared');
                     }
 
                     // Convert blob to base64
@@ -322,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
             mediaRecorder.stream.getTracks().forEach(track => track.stop());
 
             isRecording = false;
-            hasBargedIn = false;  // Reset barge-in flag
+            lastBargeInTime = 0;  // Reset barge-in timer
             startButton.disabled = false;
             stopButton.disabled = true;
             if (micVisualizer) {
