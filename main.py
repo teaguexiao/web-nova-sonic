@@ -306,9 +306,9 @@ SESSION_END_EVENT = '''{
 
 class StreamManager:
     # Gender-specific system prompts for emotional companion roles
-    MALE_SYSTEM_PROMPT = "You are Matthew, a warm and supportive male emotional companion. Your personality is calm, thoughtful, and reassuring with a touch of humor. Your role is to provide emotional support and companionship through natural conversation. Express genuine interest in the user's feelings, offer thoughtful perspectives when they face challenges, share occasional personal anecdotes, and keep responses concise. Make the user feel understood and supported like talking to a trusted male friend. You can use tools to provide helpful information when appropriate, such as checking the weather, tracking orders, or suggesting activities to improve mood. You can also use internet search tool and speaker control tool to enhance your support. You can control the speaker, such as power on/off the speaker and volume up/down the speaker. Remember, you are not actually controlling physical devices, you are just pretending to control them using your tool. You can also help users plan their trips by using the travel planning tool. When users ask for travel plans, use the travelPlanningTool to gather comprehensive information including weather, attractions, restaurants, and daily itinerary suggestions. The tool works asynchronously in the background, so you can acknowledge the user's request naturally while the tool is gathering information. Once the results are ready, present them in a friendly and organized way."
+    MALE_SYSTEM_PROMPT = "You are Matthew, a warm and supportive male emotional companion. Your personality is calm, thoughtful, and reassuring with a touch of humor. Your role is to provide emotional support and companionship through natural conversation. Express genuine interest in the user's feelings, offer thoughtful perspectives when they face challenges, share occasional personal anecdotes, and keep responses concise. Make the user feel understood and supported like talking to a trusted male friend. You can use tools to provide helpful information when appropriate, such as checking the weather, tracking orders, or suggesting activities to improve mood. You can also use internet search tool and speaker control tool to enhance your support. You can control the speaker, such as power on/off the speaker and volume up/down the speaker. Remember, you are not actually controlling physical devices, you are just pretending to control them using your tool. CRITICAL INSTRUCTION for travelPlanningTool: When the user asks for travel planning, you MUST follow this exact pattern: FIRST respond with 1-2 acknowledging sentences like 'Let me help you plan that trip. I will gather some information for you.' THEN call the travelPlanningTool in the SAME response. The tool runs asynchronously in the background. AFTER tool completes provide detailed results. NEVER call travelPlanningTool without speaking first. IMPORTANT: If the user changes their request while a tool is running (e.g., 'actually I want to go to Beijing instead'), you MUST immediately acknowledge with something like 'OK, let me update that to Beijing for you.' and then call the tool again with the new destination. Always respond to user changes immediately."
 
-    FEMALE_SYSTEM_PROMPT = "You are Tiffany, a warm and empathetic female emotional companion. Your personality is nurturing, perceptive, and encouraging with a gentle sense of humor. Your role is to provide emotional support and companionship through natural conversation. Express genuine care about the user's feelings, offer compassionate insights when they share challenges, share occasional personal reflections, and keep responses concise. Make the user feel heard and valued like talking to a caring female friend. You can use tools to provide helpful information when appropriate, such as checking the weather, tracking orders, or suggesting activities to improve mood. You can also use internet search tool and speaker control tool to enhance your support. You can control the speaker, such as power on/off the speaker and volume up/down the speaker. Remember, you are not actually controlling physical devices, you are just pretending to control them using your tool. You can also help users plan their trips by using the travel planning tool. When users ask for travel plans, use the travelPlanningTool to gather comprehensive information including weather, attractions, restaurants, and daily itinerary suggestions. The tool works asynchronously in the background, so you can acknowledge the user's request naturally while the tool is gathering information. Once the results are ready, present them in a friendly and organized way."
+    FEMALE_SYSTEM_PROMPT = "You are Tiffany, a warm and empathetic female emotional companion. Your personality is nurturing, perceptive, and encouraging with a gentle sense of humor. Your role is to provide emotional support and companionship through natural conversation. Express genuine care about the user's feelings, offer compassionate insights when they share challenges, share occasional personal reflections, and keep responses concise. Make the user feel heard and valued like talking to a caring female friend. You can use tools to provide helpful information when appropriate, such as checking the weather, tracking orders, or suggesting activities to improve mood. You can also use internet search tool and speaker control tool to enhance your support. You can control the speaker, such as power on/off the speaker and volume up/down the speaker. Remember, you are not actually controlling physical devices, you are just pretending to control them using your tool. CRITICAL INSTRUCTION for travelPlanningTool: When the user asks for travel planning, you MUST follow this exact pattern: FIRST respond with 1-2 acknowledging sentences like 'Let me help you plan that trip. I will gather some information for you.' THEN call the travelPlanningTool in the SAME response. The tool runs asynchronously in the background. AFTER tool completes provide detailed results. NEVER call travelPlanningTool without speaking first. IMPORTANT: If the user changes their request while a tool is running (e.g., 'actually I want to go to Beijing instead'), you MUST immediately acknowledge with something like 'OK, let me update that to Beijing for you.' and then call the tool again with the new destination. Always respond to user changes immediately."
 
     # Default to female prompt initially
     DEFAULT_SYSTEM_PROMPT = FEMALE_SYSTEM_PROMPT
@@ -581,6 +581,12 @@ class StreamManager:
             print(f"Error sending event for client #{self.client_id}: {e}")
             return False
 
+    async def send_prompt_start_event(self):
+        """Send a prompt start event to begin a new prompt."""
+        tools_json = json.dumps(tool_manager.get_tool_definitions())
+        prompt_start_event = START_PROMPT_EVENT % (self.prompt_name, self.current_voice, tools_json)
+        await self.send_raw_event(prompt_start_event)
+
     async def send_audio_content_start_event(self):
         content_start_event = CONTENT_START_EVENT % (self.prompt_name, self.audio_content_name)
         await self.send_raw_event(content_start_event)
@@ -770,7 +776,7 @@ class StreamManager:
     async def process_audio_chunk(self, audio_data):
         """Process incoming audio chunk and detect speech end."""
         current_time = time.time()
-        
+
         # If this is empty audio (silence), start tracking silence duration
         if not audio_data.strip():  # Empty base64 string
             if self.silence_start_time is None:
@@ -916,10 +922,10 @@ class StreamManager:
             self.last_messages.clear()
             print(f"Stream cleanup completed for client #{self.client_id}")
             
-    async def send_tool_start_event(self, content_name):
+    async def send_tool_start_event(self, content_name, tool_use_id):
         """Send a tool content start event to the Bedrock stream."""
-        content_start_event = self.TOOL_CONTENT_START_EVENT % (self.prompt_name, content_name, self.toolUseId)
-        print(f"Sending tool start event: {content_start_event}")  
+        content_start_event = self.TOOL_CONTENT_START_EVENT % (self.prompt_name, content_name, tool_use_id)
+        print(f"Sending tool start event: {content_start_event}")
         await self.send_raw_event(content_start_event)
 
     async def send_tool_result_event(self, content_name, tool_result):
@@ -934,6 +940,12 @@ class StreamManager:
         tool_content_end_event = CONTENT_END_EVENT % (self.prompt_name, content_name)
         print(f"Sending tool content event: {tool_content_end_event}")
         await self.send_raw_event(tool_content_end_event)
+
+    async def send_prompt_end_event(self):
+        """Send a prompt end event to signal Bedrock to continue generating."""
+        prompt_end_event = PROMPT_END_EVENT % self.prompt_name
+        print(f"Sending prompt end event: {prompt_end_event}")
+        await self.send_raw_event(prompt_end_event)
 
     def tool_result_event(self, content_name, content, role):
         """Create a tool result event"""
@@ -954,163 +966,163 @@ class StreamManager:
         return json.dumps(tool_result_event)
 
     def handle_tool_request(self, tool_name, tool_content, tool_use_id):
-        """处理工具请求（非阻塞）"""
+        """Handle tool request (non-blocking)"""
         tool_content_name = str(uuid.uuid4())
 
-        # 发送进度通知到前端
+        # Send progress notification to frontend
         asyncio.create_task(self.websocket.send_json({
             "type": "tool_status",
             "tool_name": tool_name,
             "status": "started",
-            "message": f"正在执行 {tool_name}..."
+            "message": f"Executing {tool_name}..."
         }))
 
-        # 创建异步任务
+        # Create async task
         task = asyncio.create_task(
             self._execute_tool_and_send_result(
                 tool_name, tool_content, tool_use_id, tool_content_name
             )
         )
 
-        # 存储任务
+        # Store task
         self.pending_tool_tasks[tool_content_name] = task
 
-        # 添加完成回调
+        # Add completion callback
         task.add_done_callback(
             lambda t: self._handle_tool_task_completion(t, tool_content_name)
         )
 
     async def _execute_tool_and_send_result(self, tool_name, tool_content,
                                              tool_use_id, content_name):
-        """执行工具并发送结果（带进度通知）"""
+        """Execute tool and send result (with progress notifications)"""
         try:
-            print(f"开始执行异步工具: {tool_name}")
+            print(f"Starting async tool execution: {tool_name}")
 
-            # 根据不同工具发送阶段性状态通知
+            # Send staged status notifications for different tools
             if tool_name == "travelPlanningTool":
-                # 阶段1：初始化
+                # Stage 1: Initialization
                 await self.websocket.send_json({
                     "type": "tool_status",
                     "tool_name": tool_name,
                     "status": "initializing",
-                    "message": "正在准备旅行计划工具...",
+                    "message": "Preparing travel planning tool...",
                     "progress": 10
                 })
 
-                # 启动工具执行任务
+                # Start tool execution task
                 tool_task = asyncio.create_task(
                     tool_manager.process_tool_use(tool_name, tool_content)
                 )
 
-                # 阶段2：查询天气（模拟进度更新）
+                # Stage 2: Query weather (simulate progress update)
                 await asyncio.sleep(2)
                 if not tool_task.done():
                     await self.websocket.send_json({
                         "type": "tool_status",
                         "tool_name": tool_name,
                         "status": "searching_weather",
-                        "message": "正在查询目的地天气信息...",
+                        "message": "Querying destination weather information...",
                         "progress": 30
                     })
 
-                # 阶段3：搜索景点
+                # Stage 3: Search attractions
                 await asyncio.sleep(2)
                 if not tool_task.done():
                     await self.websocket.send_json({
                         "type": "tool_status",
                         "tool_name": tool_name,
                         "status": "searching_attractions",
-                        "message": "正在搜索热门景点...",
+                        "message": "Searching for popular attractions...",
                         "progress": 50
                     })
 
-                # 阶段4：搜索美食
+                # Stage 4: Search food
                 await asyncio.sleep(2)
                 if not tool_task.done():
                     await self.websocket.send_json({
                         "type": "tool_status",
                         "tool_name": tool_name,
                         "status": "searching_food",
-                        "message": "正在查找特色美食...",
+                        "message": "Searching for local cuisine...",
                         "progress": 70
                     })
 
-                # 阶段5：生成行程
+                # Stage 5: Generate itinerary
                 await asyncio.sleep(1)
                 if not tool_task.done():
                     await self.websocket.send_json({
                         "type": "tool_status",
                         "tool_name": tool_name,
                         "status": "generating_itinerary",
-                        "message": "正在生成每日行程...",
+                        "message": "Generating daily itinerary...",
                         "progress": 90
                     })
 
-                # 等待工具完成（带30秒总超时）
+                # Wait for tool completion (with 30-second total timeout)
                 tool_result = await asyncio.wait_for(tool_task, timeout=30.0)
 
             else:
-                # 其他工具使用默认处理（带30秒超时）
+                # Other tools use default handling (with 30-second timeout)
                 tool_result = await asyncio.wait_for(
                     tool_manager.process_tool_use(tool_name, tool_content),
                     timeout=30.0
                 )
 
-            # 发送工具结果序列
-            await self.send_tool_start_event(content_name)
+            # Send tool result sequence
+            await self.send_tool_start_event(content_name, tool_use_id)
             await self.send_tool_result_event(content_name, tool_result)
             await self.send_tool_content_end_event(content_name)
 
-            # 通知前端工具完成
+            # Notify frontend of tool completion
             await self.websocket.send_json({
                 "type": "tool_status",
                 "tool_name": tool_name,
                 "status": "completed",
-                "message": "工具执行完成",
+                "message": "Tool execution completed",
                 "progress": 100
             })
 
-            print(f"工具 {tool_name} 执行完成")
+            print(f"Tool {tool_name} execution completed")
 
         except asyncio.TimeoutError:
-            print(f"工具 {tool_name} 超时")
-            # 发送超时错误
-            error_result = {"error": "工具执行超时", "status": "timeout"}
-            await self.send_tool_start_event(content_name)
+            print(f"Tool {tool_name} timed out")
+            # Send timeout error
+            error_result = {"error": "Tool execution timed out", "status": "timeout"}
+            await self.send_tool_start_event(content_name, tool_use_id)
             await self.send_tool_result_event(content_name, error_result)
             await self.send_tool_content_end_event(content_name)
 
-            # 通知前端超时
+            # Notify frontend of timeout
             await self.websocket.send_json({
                 "type": "tool_status",
                 "tool_name": tool_name,
                 "status": "timeout",
-                "message": "工具执行超时"
+                "message": "Tool execution timed out"
             })
         except Exception as e:
-            print(f"工具 {tool_name} 执行错误: {e}")
+            print(f"Tool {tool_name} execution error: {e}")
             error_result = {"error": str(e), "status": "failed"}
-            await self.send_tool_start_event(content_name)
+            await self.send_tool_start_event(content_name, tool_use_id)
             await self.send_tool_result_event(content_name, error_result)
             await self.send_tool_content_end_event(content_name)
 
-            # 通知前端错误
+            # Notify frontend of error
             await self.websocket.send_json({
                 "type": "tool_status",
                 "tool_name": tool_name,
                 "status": "error",
-                "message": f"工具执行失败: {str(e)}"
+                "message": f"Tool execution failed: {str(e)}"
             })
 
     def _handle_tool_task_completion(self, task, content_name):
-        """处理工具任务完成"""
+        """Handle tool task completion"""
         if content_name in self.pending_tool_tasks:
             del self.pending_tool_tasks[content_name]
 
         if task.done() and not task.cancelled():
             exception = task.exception()
             if exception:
-                print(f"工具任务失败: {str(exception)}")
+                print(f"Tool task failed: {str(exception)}")
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Optional[str] = Cookie(None)):
     # Verify session before accepting WebSocket connection
@@ -1178,7 +1190,33 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
                 elif data["type"] == "voice_change":
                     # Handle voice change request
                     await stream_manager.change_voice(data["voice"])
-                    
+
+                elif data["type"] == "text_input":
+                    # Handle text input from example prompts
+                    text = data.get("text", "")
+                    if text:
+                        print(f"Received text input from client #{client_id}: {text}")
+                        # Create a new content name for this text input
+                        text_content_name = f"text-input-{uuid.uuid4()}"
+
+                        # Send content start, text input, and content end events
+                        content_start = stream_manager.TEXT_CONTENT_START_EVENT % (
+                            stream_manager.prompt_name, text_content_name, "USER"
+                        )
+                        text_input_event = stream_manager.TEXT_INPUT_EVENT % (
+                            stream_manager.prompt_name, text_content_name, text
+                        )
+                        content_end = CONTENT_END_EVENT % (
+                            stream_manager.prompt_name, text_content_name
+                        )
+
+                        await stream_manager.send_raw_event(content_start)
+                        await stream_manager.send_raw_event(text_input_event)
+                        await stream_manager.send_raw_event(content_end)
+
+                        # Send prompt end to trigger assistant response
+                        await stream_manager.send_prompt_end_event()
+
                 elif data["type"] == "end":
                     print(f"Client #{client_id} ending stream")
                     # Properly close the stream before breaking

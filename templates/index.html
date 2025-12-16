@@ -279,6 +279,77 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
+        .microphone-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background: #F3F4F6;
+            color: #6B7280;
+            border: 2px solid #E5E7EB;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge i {
+            font-size: 0.5rem;
+        }
+
+        .status-badge.ready {
+            background: #F3F4F6;
+            color: #6B7280;
+            border-color: #E5E7EB;
+        }
+
+        .status-badge.ready i {
+            color: #9CA3AF;
+        }
+
+        .status-badge.recording {
+            background: #FEE2E2;
+            color: #DC2626;
+            border-color: #FCA5A5;
+            animation: pulse 2s infinite;
+        }
+
+        .status-badge.recording i {
+            color: #DC2626;
+            animation: blink 1s infinite;
+        }
+
+        .status-badge.error {
+            background: #FEE2E2;
+            color: #DC2626;
+            border-color: #FCA5A5;
+        }
+
+        .status-badge.error i {
+            color: #DC2626;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+            }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
         .microphone-visualizer {
             width: 80px;
             height: 80px;
@@ -359,28 +430,6 @@
             border-radius: 0.75rem;
             overflow: hidden;
             flex-shrink: 0;
-        }
-
-        .not-recording, .recording, .error {
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            white-space: nowrap;
-        }
-        
-        .not-recording {
-            color: #6B7280;
-            background-color: #F9FAFB;
-        }
-        
-        .recording {
-            color: #DC2626;
-            background-color: #FEE2E2;
-        }
-        
-        .error {
-            color: #DC2626;
-            background-color: #FEE2E2;
         }
 
         /* Tool Status Display in Transcript */
@@ -596,6 +645,113 @@
             text-align: left;
         }
 
+        /* Welcome Screen Styles */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 2rem;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-screen.hidden {
+            display: none;
+        }
+
+        .welcome-header {
+            margin-bottom: 2rem;
+        }
+
+        .welcome-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+        }
+
+        .welcome-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .welcome-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1rem;
+            color: #6B7280;
+            margin-bottom: 0;
+        }
+
+        .example-prompts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        .example-prompt {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .example-prompt i {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            flex-shrink: 0;
+        }
+
+        .example-prompt span {
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .welcome-footer {
+            margin-top: 1rem;
+        }
+
+        .welcome-footer p {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #9CA3AF;
+            margin: 0;
+        }
+
+        .welcome-footer i {
+            color: var(--primary-color);
+        }
+
         .logout-btn {
             background: transparent;
             border: none;
@@ -722,11 +878,93 @@
             margin-bottom: 2rem;
         }
 
-        .pricing img {
-            max-width: 100%;
-            height: auto;
+        .pricing-table-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 2rem auto;
+            overflow-x: auto;
+        }
+
+        .pricing-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
             border-radius: 0.75rem;
-            margin-bottom: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .pricing-table thead {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        .pricing-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .pricing-table tbody tr {
+            border-bottom: 1px solid #E5E7EB;
+            transition: background-color 0.2s ease;
+        }
+
+        .pricing-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-table tbody tr:hover {
+            background-color: #F9FAFB;
+        }
+
+        .pricing-table td {
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .modality-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .modality-badge.speech {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .modality-badge.text {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .pricing-note {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #F9FAFB;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0.5rem;
+            text-align: left;
+        }
+
+        .pricing-note p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: #4B5563;
+            line-height: 1.6;
+        }
+
+        .pricing-note p:first-child {
+            margin-top: 0;
+        }
+
+        .pricing-note p:last-child {
+            margin-bottom: 0;
         }
 
         .pricing-link {
@@ -745,6 +983,22 @@
         .pricing-link:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .pricing-table-container {
+                overflow-x: auto;
+            }
+
+            .pricing-table {
+                font-size: 0.85rem;
+            }
+
+            .pricing-table th,
+            .pricing-table td {
+                padding: 0.75rem 0.5rem;
+                white-space: nowrap;
+            }
         }
         
         /* Tools List Styles */
@@ -1243,8 +1497,14 @@
                 <!-- Right Panel with Chat History -->
                 <div class="right-panel">
                     <div class="chat-interface">
-                        <div class="microphone-visualizer" id="micVisualizer">
-                            <i class="fa fas fa-microphone"></i>
+                        <div class="microphone-container">
+                            <div class="status-badge" id="statusBadge">
+                                <i class="fas fa-circle"></i>
+                                <span id="statusText">Ready</span>
+                            </div>
+                            <div class="microphone-visualizer" id="micVisualizer">
+                                <i class="fa fas fa-microphone"></i>
+                            </div>
                         </div>
 
                         <div class="controls">
@@ -1254,10 +1514,46 @@
                             </button>
                         </div>
 
-                        <div id="status" class="not-recording">Status: Not recording</div>
                         <div id="visualizer"></div>
                     </div>
-                    <div id="transcript"></div>
+                    <div id="transcript">
+                        <!-- Welcome screen with example prompts -->
+                        <div id="welcomeScreen" class="welcome-screen">
+                            <div class="welcome-header">
+                                <h2 class="welcome-title">Welcome to Nova Sonic</h2>
+                                <p class="welcome-subtitle">Try asking me something! Here are some examples:</p>
+                            </div>
+                            <div class="example-prompts">
+                                <div class="example-prompt">
+                                    <i class="fas fa-cloud-sun"></i>
+                                    <span>What is the weather in Seattle?</span>
+                                </div>
+                                <div class="example-prompt">
+                                    <i class="fas fa-clock"></i>
+                                    <span>What time is it now?</span>
+                                </div>
+                                <div class="example-prompt">
+                                    <i class="fas fa-plane"></i>
+                                    <span>Make a travel plan for 3 days in Beijing</span>
+                                </div>
+                                <div class="example-prompt">
+                                    <i class="fas fa-box"></i>
+                                    <span>Track my order 12345</span>
+                                </div>
+                                <div class="example-prompt">
+                                    <i class="fas fa-smile"></i>
+                                    <span>I'm feeling stressed, what should I do?</span>
+                                </div>
+                                <div class="example-prompt">
+                                    <i class="fas fa-search"></i>
+                                    <span>Search for the latest AI news</span>
+                                </div>
+                            </div>
+                            <div class="welcome-footer">
+                                <p><i class="fas fa-info-circle"></i> Click the microphone button above to start talking</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -1296,7 +1592,39 @@
             <div class="pricing">
                 <h2>Nova Sonic Pricing</h2>
                 <p>Learn more about Nova Sonic pricing and plans</p>
-                <img src="/static/Nova-Pricing.jpg" alt="Nova Sonic Pricing" />
+
+                <div class="pricing-table-container">
+                    <table class="pricing-table">
+                        <thead>
+                            <tr>
+                                <th>Amazon Nova models</th>
+                                <th>Modality</th>
+                                <th>Price per 1,000 input tokens</th>
+                                <th>Price per 1,000 output tokens</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Amazon Nova 2 Sonic</td>
+                                <td><span class="modality-badge speech">Speech</span></td>
+                                <td>$0.003</td>
+                                <td>$0.012</td>
+                            </tr>
+                            <tr>
+                                <td>Amazon Nova 2 Sonic</td>
+                                <td><span class="modality-badge text">Text</span></td>
+                                <td>$0.000319</td>
+                                <td>$0.002651</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="pricing-note">
+                        <p><strong>Note:</strong> The text tokens input and output pricing applies to specific use cases such as speech-to-text transcription, tool calls for task completion or knowledge grounding, adding conversation history to the session etc.</p>
+                        <p>On-demand inference for custom Nova models is priced the same as base Nova inference.</p>
+                    </div>
+                </div>
+
                 <a href="https://aws.amazon.com/bedrock/pricing/" target="_blank" class="pricing-link">
                     <i class="fa fas fa-external-link-alt"></i>
                     View Pricing Details
@@ -1349,7 +1677,13 @@
         function addMessageToTranscript(data) {
             const transcriptDiv = document.getElementById('transcript');
             const isAssistant = data.role === 'ASSISTANT';
-            
+
+            // Hide welcome screen when first message arrives
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            if (welcomeScreen && !welcomeScreen.classList.contains('hidden')) {
+                welcomeScreen.classList.add('hidden');
+            }
+
             // Create message container
             const messageContainer = document.createElement('div');
             messageContainer.className = 'message-container';
@@ -1502,7 +1836,7 @@
                     <div class="tool-status-card">
                         <div class="tool-status-header">
                             <div class="spinner-icon"></div>
-                            <span class="tool-status-title">工具执行中</span>
+                            <span class="tool-status-title">Tool Executing</span>
                         </div>
                         <div class="tool-status-content">${message}</div>
                     </div>
@@ -1524,7 +1858,7 @@
                         <div class="tool-status-card completed">
                             <div class="tool-status-header">
                                 <i class="fas fa-check-circle" style="color: #10B981;"></i>
-                                <span class="tool-status-title">工具执行完成</span>
+                                <span class="tool-status-title">Tool Completed</span>
                             </div>
                             <div class="tool-status-content">${message}</div>
                         </div>
@@ -1621,8 +1955,10 @@
             
             ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
-                document.getElementById('status').textContent = 'Status: WebSocket error';
-                document.getElementById('status').className = 'error';
+                const statusBadge = document.getElementById('statusBadge');
+                const statusText = document.getElementById('statusText');
+                statusText.textContent = 'Error';
+                statusBadge.className = 'status-badge error';
             };
         }
 
@@ -1797,8 +2133,10 @@
             toggleButtonIcon.className = 'fa fas fa-stop';
             toggleButtonText.textContent = 'Stop Talking';
 
-            document.getElementById('status').textContent = 'Status: Recording';
-            document.getElementById('status').className = 'recording';
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = 'Recording';
+            statusBadge.className = 'status-badge recording';
             micVisualizer.classList.add('recording');
             console.log('Started recording');
         }
@@ -1819,8 +2157,10 @@
             toggleButtonIcon.className = 'fa fas fa-microphone';
             toggleButtonText.textContent = 'Start Talking';
 
-            document.getElementById('status').textContent = 'Status: Not recording';
-            document.getElementById('status').className = 'not-recording';
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = 'Ready';
+            statusBadge.className = 'status-badge ready';
             micVisualizer.classList.remove('recording');
             
             try {
@@ -1963,39 +2303,39 @@
             // Tool information database
             const toolInfo = {
                 'getDateAndTimeTool': {
-                    description: '获取当前日期和时间信息，包括年月日、星期、时区等详细信息。',
+                    description: 'Get current date and time information, including year, month, day, day of week, timezone, and other details.',
                     sampleInput: '{}',
                     sampleOutput: '{"formattedTime": "02:30 PM", "date": "2025-12-15", "year": 2025, "month": 12, "day": 15, "dayOfWeek": "MONDAY", "timezone": "PST"}'
                 },
                 'trackOrderTool': {
-                    description: '通过订单号追踪订单状态，提供预计送达时间和当前物流信息。',
+                    description: 'Track order status by order number, provides estimated delivery time and current logistics information.',
                     sampleInput: '{"orderId": "1234", "requestNotifications": false}',
                     sampleOutput: '{"orderStatus": "In transit", "orderNumber": "1234", "estimatedDelivery": "2025-12-18", "currentLocation": "Distribution Center"}'
                 },
                 'getWeatherTool': {
-                    description: '查询指定城市的天气情况，包括温度、湿度、风速等气象信息。',
+                    description: 'Query weather conditions for a specified city, including temperature, humidity, wind speed, and other meteorological information.',
                     sampleInput: '{"location": "Beijing", "unit": "celsius"}',
                     sampleOutput: '{"location": "Beijing", "temperature": 15, "condition": "Sunny", "humidity": 45, "windSpeed": 12, "unit": "celsius"}'
                 },
                 'getMoodSuggestionTool': {
-                    description: '根据用户当前心情提供个性化的活动建议，帮助改善情绪。',
+                    description: 'Provide personalized activity suggestions based on user\'s current mood to help improve emotional state.',
                     sampleInput: '{"mood": "stressed", "preferences": "relaxing activities"}',
-                    sampleOutput: '{"suggestions": ["冥想10分钟", "听轻音乐", "散步放松"], "mood": "stressed", "status": "success"}'
+                    sampleOutput: '{"suggestions": ["Meditate for 10 minutes", "Listen to soothing music", "Take a relaxing walk"], "mood": "stressed", "status": "success"}'
                 },
                 'searchTool': {
-                    description: '使用 EXA 搜索引擎进行互联网搜索，获取最新的信息和资讯。',
-                    sampleInput: '{"query": "最新AI技术发展"}',
-                    sampleOutput: '{"results": ["result1", "result2"], "query": "最新AI技术发展", "status": "success"}'
+                    description: 'Use EXA search engine for internet searches to get the latest information and news.',
+                    sampleInput: '{"query": "latest AI technology developments"}',
+                    sampleOutput: '{"results": ["result1", "result2"], "query": "latest AI technology developments", "status": "success"}'
                 },
                 'speakerControlTool': {
-                    description: '控制智能音箱，支持开关、音量调节和状态查询等功能。',
+                    description: 'Control smart speakers, supports power on/off, volume adjustment, and status query functions.',
                     sampleInput: '{"action": "volume_up", "deviceId": "living_room_speaker"}',
                     sampleOutput: '{"device_id": "living_room_speaker", "power": true, "volume": 7, "message": "Increased volume to 7", "status": "success"}'
                 },
                 'travelPlanningTool': {
-                    description: '为用户制定详细的旅行计划。异步调用天气、景点、美食等多个信息源，生成包含每日行程的完整旅行方案。支持异步调用，不会阻塞对话。',
-                    sampleInput: '{"destination": "北京", "days": 3, "preferences": "文化历史"}',
-                    sampleOutput: '{"destination": "北京", "days": 3, "weather": {...}, "itinerary": [{"day": 1, "activities": ["上午：游览故宫", "中午：品尝北京烤鸭", "下午：参观天安门广场"]}], "attractions": [...], "food_recommendations": [...], "status": "success"}',
+                    description: 'Create detailed travel plans for users. Asynchronously calls multiple information sources including weather, attractions, and food, generating complete travel plans with daily itineraries. Supports asynchronous calls without blocking conversation.',
+                    sampleInput: '{"destination": "Beijing", "days": 3, "preferences": "culture and history"}',
+                    sampleOutput: '{"destination": "Beijing", "days": 3, "weather": {...}, "itinerary": [{"day": 1, "activities": ["Morning: Visit the Forbidden City", "Lunch: Try Beijing Roast Duck", "Afternoon: Tour Tiananmen Square"]}], "attractions": [...], "food_recommendations": [...], "status": "success"}',
                     isAsync: true
                 }
             };
@@ -2038,7 +2378,7 @@
             // Set modal content
             modalContent.innerHTML = `
                 <div class="tool-modal-section">
-                    <h4 class="tool-modal-section-title">📝 描述</h4>
+                    <h4 class="tool-modal-section-title">📝 Description</h4>
                     <p class="tool-modal-description">${info.description}</p>
                 </div>
                 <div class="tool-modal-section">
@@ -2121,20 +2461,29 @@
             const novaSonic2Modal = document.getElementById('novaSonic2Modal');
             const closeNovaSonic2Modal = document.getElementById('closeNovaSonic2Modal');
 
-            // 每次登录后都显示弹窗,延迟500ms让页面先加载完成
-            setTimeout(() => {
-                novaSonic2Modal.classList.add('active');
-            }, 500);
+            // Check if user has already seen this modal
+            const hasSeenModal = localStorage.getItem('novaSonic2ModalSeen');
 
-            // 关闭按钮事件
-            closeNovaSonic2Modal.addEventListener('click', () => {
+            // Show modal only if user hasn't seen it before
+            if (!hasSeenModal) {
+                setTimeout(() => {
+                    novaSonic2Modal.classList.add('active');
+                }, 500);
+            }
+
+            // Function to close modal and mark as seen
+            const closeModal = () => {
                 novaSonic2Modal.classList.remove('active');
-            });
+                localStorage.setItem('novaSonic2ModalSeen', 'true');
+            };
 
-            // 点击遮罩层关闭弹窗
+            // Close button event
+            closeNovaSonic2Modal.addEventListener('click', closeModal);
+
+            // Close modal when clicking on overlay
             novaSonic2Modal.addEventListener('click', (e) => {
                 if (e.target === novaSonic2Modal) {
-                    novaSonic2Modal.classList.remove('active');
+                    closeModal();
                 }
             });
         });
@@ -2162,22 +2511,22 @@
     <div class="modal-overlay" id="novaSonic2Modal">
         <div class="modal-container" style="max-width: 700px;">
             <div class="modal-header">
-                <h3 class="modal-title">🎉 Nova Sonic 2 现已支持!</h3>
+                <h3 class="modal-title">🎉 Nova Sonic 2 Now Available!</h3>
                 <button class="modal-close" id="closeNovaSonic2Modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-content">
                 <div class="feature-intro">
-                    <p>本Demo页面已经升级支持Amazon Nova Sonic 2,提供以下核心功能:</p>
+                    <p>This demo page has been upgraded to support Amazon Nova Sonic 2, offering the following core features:</p>
                     <ul class="feature-list">
-                        <li><strong>低延迟实时对话:</strong> 实现流畅的实时语音交互体验</li>
-                        <li><strong>多语言语音理解:</strong> 支持多种语言和说话风格的语音识别</li>
-                        <li><strong>22种表现力丰富的语音:</strong> 包括英语、西班牙语、德语、法语、意大利语、葡萄牙语和印地语的多种男女声音</li>
-                        <li><strong>自然流畅的对话处理:</strong> 能够理解和适应用户语音中的停顿、犹豫和打断,并在整个交互过程中保持对话上下文</li>
-                        <li><strong>跨模态输入:</strong> 支持在同一会话中使用文本消息与AI对话,无需切换上下文</li>
-                        <li><strong>工具调用能力:</strong> 基于企业特定数据提供精准响应,执行智能工作流程(如预订服务)</li>
-                        <li><strong>异步任务处理:</strong> 用户可以在工具在后台执行操作时继续对话</li>
+                        <li><strong>Low-Latency Real-Time Conversations:</strong> Experience smooth, real-time voice interaction</li>
+                        <li><strong>Multilingual Speech Understanding:</strong> Support for speech recognition across multiple languages and speaking styles</li>
+                        <li><strong>22 Expressive Voices:</strong> Including male and female voices in English, Spanish, German, French, Italian, Portuguese, and Hindi</li>
+                        <li><strong>Natural Conversational Processing:</strong> Understands and adapts to pauses, hesitations, and interruptions in user speech while maintaining conversation context throughout</li>
+                        <li><strong>Cross-Modal Input:</strong> Support for text messages in the same session without switching context</li>
+                        <li><strong>Tool-Calling Capabilities:</strong> Provides precise responses based on enterprise-specific data and executes intelligent workflows (e.g., booking services)</li>
+                        <li><strong>Asynchronous Task Processing:</strong> Users can continue conversations while tools execute operations in the background</li>
                     </ul>
 
                     <div class="learn-more">
@@ -2185,7 +2534,7 @@
                            target="_blank"
                            class="pricing-link">
                             <i class="fas fa-book"></i>
-                            查看详细文档
+                            Learn More
                         </a>
                     </div>
                 </div>

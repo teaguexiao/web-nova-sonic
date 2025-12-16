@@ -121,17 +121,17 @@ class ToolManager:
             "properties": {
                 "destination": {
                     "type": "string",
-                    "description": "旅行目的地城市，例如：北京、上海、巴黎"
+                    "description": "Travel destination city, e.g., Beijing, Shanghai, Paris"
                 },
                 "days": {
                     "type": "integer",
-                    "description": "旅行天数（1-30天）",
+                    "description": "Number of travel days (1-30 days)",
                     "minimum": 1,
                     "maximum": 30
                 },
                 "preferences": {
                     "type": "string",
-                    "description": "旅行偏好（可选），例如：文化、美食、自然风光、购物等",
+                    "description": "Travel preferences (optional), e.g., culture, food, nature, shopping",
                     "default": ""
                 }
             },
@@ -196,7 +196,7 @@ class ToolManager:
             {
                 "toolSpec": {
                     "name": "travelPlanningTool",
-                    "description": "为用户制定详细的旅行计划。当用户请求旅行建议时使用此工具，它会异步收集目的地的天气信息、热门景点、特色美食推荐，并生成每日行程建议。支持自定义旅行天数和偏好。",
+                    "description": "Create detailed travel plans for users. MANDATORY REQUIREMENT: You MUST speak to the user FIRST with 1-2 acknowledging sentences (e.g., 'Let me help you plan that trip. I'll gather some information for you.') BEFORE calling this tool. DO NOT call this tool silently. Your verbal acknowledgment and tool call should happen in the SAME response. This tool runs asynchronously in the background and collects destination weather, attractions, food recommendations, and generates daily itineraries. Supports custom travel days and preferences.",
                     "inputSchema": {
                         "json": travel_planning_schema
                     }
@@ -820,9 +820,9 @@ class ToolManager:
         }
 
     async def travel_planning(self, tool_use_content: Dict[str, Any]) -> Dict[str, Any]:
-        """为用户制定详细的旅行计划，异步调用多个信息源。"""
+        """Create detailed travel plan for users, asynchronously calling multiple information sources."""
         try:
-            # 1. 解析参数
+            # 1. Parse parameters
             content = tool_use_content.get("content", {})
             if isinstance(content, str):
                 try:
@@ -837,33 +837,33 @@ class ToolManager:
             preferences = content_data.get("preferences", "")
 
             if not destination:
-                return {"error": "目的地不能为空", "status": "failed"}
+                return {"error": "Destination cannot be empty", "status": "failed"}
 
             if not isinstance(days, int) or days < 1 or days > 30:
-                return {"error": "天数必须在1-30之间", "status": "failed"}
+                return {"error": "Days must be between 1 and 30", "status": "failed"}
 
-            print(f"开始规划 {destination} 的 {days} 天旅行计划")
+            print(f"Starting to plan {days}-day travel for {destination}")
 
-            # 2. 模拟耗时操作 - 让模型有时间继续说话
-            # 这里模拟查询多个数据源的延迟
-            print(f"正在收集 {destination} 的旅行信息（这需要一些时间）...")
+            # 2. Simulate time-consuming operation - give model time to continue talking
+            # Simulate delays from querying multiple data sources
+            print(f"Collecting travel information for {destination} (this will take some time)...")
 
-            # 2.1 先查询天气（快速查询，2秒）
-            await asyncio.sleep(2)  # 模拟网络延迟
+            # 2.1 Query weather first (quick query, 2 seconds)
+            await asyncio.sleep(2)  # Simulate network delay
             weather_task = asyncio.create_task(self._get_weather_for_travel(destination))
 
-            # 2.2 然后并行查询景点和美食（较慢查询，各5秒）
-            await asyncio.sleep(1)  # 模拟处理延迟
+            # 2.2 Then query attractions and food in parallel (slower queries, 5 seconds each)
+            await asyncio.sleep(1)  # Simulate processing delay
             attractions_task = asyncio.create_task(
                 asyncio.wait_for(self._search_attractions(destination), timeout=15)
             )
 
-            await asyncio.sleep(1)  # 模拟处理延迟
+            await asyncio.sleep(1)  # Simulate processing delay
             food_task = asyncio.create_task(
                 asyncio.wait_for(self._search_food(destination), timeout=15)
             )
 
-            # 2.3 等待所有任务完成（使用 return_exceptions 确保部分失败不影响整体）
+            # 2.3 Wait for all tasks to complete (use return_exceptions to ensure partial failures don't affect overall result)
             results = await asyncio.gather(
                 weather_task,
                 attractions_task,
@@ -871,40 +871,40 @@ class ToolManager:
                 return_exceptions=True
             )
 
-            # 3. 整合结果（忽略失败的查询）
+            # 3. Integrate results (ignore failed queries)
             weather_info = results[0] if not isinstance(results[0], Exception) else None
             attractions = results[1] if not isinstance(results[1], Exception) else []
             food = results[2] if not isinstance(results[2], Exception) else []
 
-            # 记录失败的查询
+            # Log failed queries
             if isinstance(results[0], Exception):
-                print(f"天气查询失败: {results[0]}")
+                print(f"Weather query failed: {results[0]}")
             if isinstance(results[1], Exception):
-                print(f"景点搜索失败: {results[1]}")
+                print(f"Attraction search failed: {results[1]}")
             if isinstance(results[2], Exception):
-                print(f"美食搜索失败: {results[2]}")
+                print(f"Food search failed: {results[2]}")
 
-            # 4. 生成每日行程（也模拟一些处理时间）
-            await asyncio.sleep(1)  # 模拟行程规划时间
+            # 4. Generate daily itinerary (also simulate some processing time)
+            await asyncio.sleep(1)  # Simulate itinerary planning time
             itinerary = self._generate_daily_itinerary(days, attractions, food, preferences)
 
-            print(f"完成 {destination} 的旅行计划规划")
+            print(f"Completed travel plan for {destination}")
 
-            # 5. 返回结构化计划
+            # 5. Return structured plan
             return {
                 "destination": destination,
                 "days": days,
-                "preferences": preferences if preferences else "无特殊偏好",
+                "preferences": preferences if preferences else "No specific preferences",
                 "weather": weather_info,
                 "itinerary": itinerary,
                 "attractions": attractions,
                 "food_recommendations": food,
                 "status": "success",
-                "processing_time": "约5-10秒"
+                "processing_time": "Approximately 5-10 seconds"
             }
 
         except Exception as e:
-            print(f"旅行规划工具执行错误: {e}")
+            print(f"Travel planning tool execution error: {e}")
             import traceback
             traceback.print_exc()
             return {
@@ -913,9 +913,9 @@ class ToolManager:
             }
 
     async def _get_weather_for_travel(self, destination: str) -> Optional[Dict[str, Any]]:
-        """获取目的地天气信息（复用现有的天气查询功能）"""
+        """Get destination weather information (reuses existing weather query function)"""
         try:
-            # 构造天气查询请求
+            # Construct weather query request
             weather_request = {
                 "content": json.dumps({
                     "location": destination,
@@ -925,32 +925,32 @@ class ToolManager:
             result = await self.get_weather(weather_request)
             return result
         except Exception as e:
-            print(f"天气查询失败: {e}")
+            print(f"Weather query failed: {e}")
             raise
 
     async def _search_attractions(self, destination: str) -> List[Dict[str, Any]]:
-        """使用 EXA API 搜索目的地的热门景点"""
+        """Use EXA API to search for popular attractions at destination"""
         try:
             if not EXA_API_KEY:
-                print("EXA API Key 未配置，跳过景点搜索")
+                print("EXA API Key not configured, skipping attraction search")
                 return []
 
             exa = Exa(EXA_API_KEY)
 
-            # 搜索景点信息
-            query = f"{destination} 旅游景点推荐 热门景点 必去景点"
+            # Search for attraction information
+            query = f"{destination} tourist attractions recommendations popular attractions must-see attractions"
             result = exa.answer(query, text=True)
 
-            # 解析结果
+            # Parse results
             if hasattr(result, 'answer'):
                 answer_text = result.answer
             else:
                 answer_text = result.get('answer', '')
 
-            # 简单解析景点信息（将答案分割成多个景点）
+            # Simple parsing of attraction information (split answer into multiple attractions)
             attractions = []
             if answer_text:
-                # 尝试提取景点名称和描述
+                # Try to extract attraction names and descriptions
                 lines = answer_text.split('\n')
                 current_attraction = None
                 for line in lines:
@@ -958,7 +958,7 @@ class ToolManager:
                     if line and (line[0].isdigit() or line.startswith('•') or line.startswith('-')):
                         if current_attraction:
                             attractions.append(current_attraction)
-                        # 移除序号标记
+                        # Remove numbering markers
                         clean_line = line.lstrip('0123456789.、•- ')
                         current_attraction = {"name": clean_line, "description": ""}
                     elif line and current_attraction:
@@ -967,39 +967,39 @@ class ToolManager:
                 if current_attraction:
                     attractions.append(current_attraction)
 
-                # 如果没有成功解析出结构化数据，返回完整答案
+                # If no structured data successfully parsed, return full answer
                 if not attractions:
                     attractions = [{
-                        "name": f"{destination}景点推荐",
+                        "name": f"{destination} Attractions Recommendations",
                         "description": answer_text
                     }]
 
-            return attractions[:10]  # 最多返回10个景点
+            return attractions[:10]  # Return up to 10 attractions
 
         except Exception as e:
-            print(f"景点搜索失败: {e}")
+            print(f"Attraction search failed: {e}")
             raise
 
     async def _search_food(self, destination: str) -> List[Dict[str, Any]]:
-        """使用 EXA API 搜索目的地的特色美食"""
+        """Use EXA API to search for local cuisine at destination"""
         try:
             if not EXA_API_KEY:
-                print("EXA API Key 未配置，跳过美食搜索")
+                print("EXA API Key not configured, skipping food search")
                 return []
 
             exa = Exa(EXA_API_KEY)
 
-            # 搜索美食信息
-            query = f"{destination} 特色美食推荐 当地美食 必吃美食"
+            # Search for food information
+            query = f"{destination} local cuisine recommendations must-try food"
             result = exa.answer(query, text=True)
 
-            # 解析结果
+            # Parse results
             if hasattr(result, 'answer'):
                 answer_text = result.answer
             else:
                 answer_text = result.get('answer', '')
 
-            # 简单解析美食信息
+            # Simple parsing of food information
             food_items = []
             if answer_text:
                 lines = answer_text.split('\n')
@@ -1017,39 +1017,39 @@ class ToolManager:
                 if current_food:
                     food_items.append(current_food)
 
-                # 如果没有成功解析出结构化数据，返回完整答案
+                # If no structured data successfully parsed, return full answer
                 if not food_items:
                     food_items = [{
-                        "name": f"{destination}美食推荐",
+                        "name": f"{destination} Food Recommendations",
                         "description": answer_text
                     }]
 
-            return food_items[:8]  # 最多返回8个美食推荐
+            return food_items[:8]  # Return up to 8 food recommendations
 
         except Exception as e:
-            print(f"美食搜索失败: {e}")
+            print(f"Food search failed: {e}")
             raise
 
     def _generate_daily_itinerary(self, days: int, attractions: List[Dict[str, Any]],
                                    food: List[Dict[str, Any]], preferences: str) -> List[Dict[str, Any]]:
-        """根据天数、景点和美食生成每日行程建议"""
+        """Generate daily itinerary suggestions based on days, attractions, and food"""
         itinerary = []
 
-        # 计算每天的活动数量
+        # Calculate number of activities per day
         if not attractions:
-            # 如果没有景点数据，生成基础行程
+            # If no attraction data, generate basic itinerary
             for day in range(1, days + 1):
                 itinerary.append({
                     "day": day,
                     "activities": [
-                        f"上午：自由探索{day == 1 and '，适应环境' or '当地风情'}",
-                        f"下午：{'前往市中心游览' if day <= days//2 else '在周边地区游览'}",
-                        f"晚上：品尝当地特色美食"
+                        f"Morning: Free exploration{', acclimate to environment' if day == 1 else ' of local culture'}",
+                        f"Afternoon: {'Visit city center' if day <= days//2 else 'Explore surrounding areas'}",
+                        f"Evening: Try local specialty cuisine"
                     ]
                 })
             return itinerary
 
-        # 将景点分配到各天
+        # Distribute attractions across days
         attractions_per_day = max(1, len(attractions) // days)
 
         for day in range(1, days + 1):
@@ -1059,25 +1059,25 @@ class ToolManager:
             daily_attractions = attractions[start_idx:end_idx]
             activities = []
 
-            # 上午活动
+            # Morning activity
             if daily_attractions:
-                activities.append(f"上午：游览 {daily_attractions[0]['name']}")
+                activities.append(f"Morning: Visit {daily_attractions[0]['name']}")
 
-            # 中午活动（加入美食推荐）
+            # Midday activity (include food recommendation)
             if food and day <= len(food):
-                activities.append(f"中午：品尝 {food[day-1]['name']}")
+                activities.append(f"Lunch: Try {food[day-1]['name']}")
 
-            # 下午活动
+            # Afternoon activity
             if len(daily_attractions) > 1:
-                activities.append(f"下午：参观 {daily_attractions[1]['name']}")
+                activities.append(f"Afternoon: Tour {daily_attractions[1]['name']}")
             elif daily_attractions:
-                activities.append(f"下午：深度游览 {daily_attractions[0]['name']} 周边")
+                activities.append(f"Afternoon: Explore the area around {daily_attractions[0]['name']}")
 
-            # 晚上活动
+            # Evening activity
             if len(daily_attractions) > 2:
-                activities.append(f"晚上：逛 {daily_attractions[2]['name']}")
+                activities.append(f"Evening: Explore {daily_attractions[2]['name']}")
             else:
-                activities.append("晚上：自由活动，体验当地夜生活")
+                activities.append("Evening: Free time, experience local nightlife")
 
             itinerary.append({
                 "day": day,
