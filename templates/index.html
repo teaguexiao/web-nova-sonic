@@ -382,7 +382,151 @@
             color: #DC2626;
             background-color: #FEE2E2;
         }
-        
+
+        /* Tool Status Display in Transcript */
+        .tool-status-message-container {
+            margin: 1rem 0;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tool-status-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            color: white;
+            max-width: 500px;
+        }
+
+        .tool-status-card.completed {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+
+        .tool-status-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-status-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+
+        .tool-status-content {
+            font-size: 0.875rem;
+            opacity: 0.95;
+            line-height: 1.5;
+            padding-left: 2rem;
+        }
+
+        .spinner-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tool Detail Message in Transcript */
+        .tool-detail-message {
+            margin: 1rem 0;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .tool-detail-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 1.25rem;
+            max-width: 650px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .tool-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .tool-detail-header i {
+            color: #3B82F6;
+            font-size: 1.3rem;
+        }
+
+        .tool-detail-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1E293B;
+            flex: 1;
+        }
+
+        .async-indicator {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .tool-detail-section {
+            margin-bottom: 1rem;
+        }
+
+        .tool-detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .tool-detail-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748B;
+            margin-bottom: 0.4rem;
+        }
+
+        .tool-detail-content {
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .tool-detail-code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            background-color: #F1F5F9;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: #334155;
+            overflow-x: auto;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
         #transcript {
             background: white;
             border-radius: var(--border-radius);
@@ -629,14 +773,26 @@
             padding: 0.75rem 0.5rem;
             border-radius: 0.5rem;
             margin-bottom: 0.5rem;
-            transition: var(--transition);
+            transition: all 0.2s ease;
             cursor: pointer;
+            position: relative;
         }
-        
+
         .tool-item:hover {
             background-color: var(--secondary-color);
+            transform: translateX(4px);
         }
-        
+
+        .tool-item:active {
+            transform: translateX(2px);
+            background-color: #E0E7FF;
+        }
+
+        .tool-item.active {
+            background-color: #EEF2FF;
+            border-left: 3px solid var(--primary-color);
+        }
+
         .tool-item i {
             font-size: 1.1rem;
             color: var(--primary-color);
@@ -644,10 +800,22 @@
             width: 24px;
             text-align: center;
         }
-        
-        .tool-item span {
+
+        .tool-item span:first-of-type {
             font-size: 0.95rem;
             color: var(--text-color);
+            flex: 1;
+        }
+
+        .async-badge {
+            font-size: 0.65rem !important;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.25rem;
+            letter-spacing: 0.5px;
+            margin-left: auto;
         }
         
         /* Modal Styles */
@@ -699,6 +867,23 @@
             font-weight: 600;
             color: var(--text-color);
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .modal-title i {
+            color: var(--primary-color);
+        }
+
+        .modal-title .async-indicator {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.3rem;
+            letter-spacing: 0.5px;
         }
         
         .modal-close {
@@ -723,22 +908,64 @@
         .modal-content {
             padding: 1.5rem;
         }
-        
+
+        /* Tool Modal Specific Styles */
+        .tool-modal-section {
+            margin-bottom: 1.5rem;
+            background-color: #F9FAFB;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .tool-modal-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .tool-modal-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+            margin-top: 0;
+        }
+
+        .tool-modal-description {
+            font-size: 0.95rem;
+            color: #4B5563;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .tool-modal-code {
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-size: 0.875rem;
+            background-color: #1E293B;
+            color: #E2E8F0;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            line-height: 1.6;
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
         .tool-details-section {
             margin-bottom: 1.5rem;
         }
-        
+
         .tool-details-section:last-child {
             margin-bottom: 0;
         }
-        
+
         .tool-details-section-title {
             font-size: 1rem;
             font-weight: 600;
             color: var(--text-color);
             margin-bottom: 0.75rem;
         }
-        
+
         .tool-details-description {
             font-size: 1rem;
             color: #4B5563;
@@ -1004,6 +1231,11 @@
                                 <i class="fas fa-volume-up"></i>
                                 <span>Speaker Control Tool</span>
                             </li>
+                            <li class="tool-item" data-tool="travelPlanningTool">
+                                <i class="fas fa-map-marked-alt"></i>
+                                <span>Travel Planning Tool</span>
+                                <span class="async-badge">ASYNC</span>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -1228,7 +1460,7 @@
         // WebSocket message handler
         function handleWebSocketMessage(event) {
             const data = JSON.parse(event.data);
-            
+
             if (data.type === 'audio') {
                 isAssistantSpeaking = true;  // Mark that assistant is speaking
                 const audioData = base64ToFloat32Array(data.data);
@@ -1246,6 +1478,65 @@
                     isAssistantSpeaking = false;
                 }
                 console.log(`Status update: ${data.status} - ${data.message}`);
+            } else if (data.type === 'tool_status') {
+                // Display tool execution status
+                displayToolStatus(data.status, data.message);
+            }
+        }
+
+        // Display tool status to user in transcript
+        function displayToolStatus(status, message) {
+            const transcriptDiv = document.getElementById('transcript');
+
+            if (status === 'started' || status === 'searching_weather') {
+                // Remove any existing tool status message
+                const existingStatus = transcriptDiv.querySelector('.tool-status-message-container');
+                if (existingStatus) {
+                    existingStatus.remove();
+                }
+
+                // Create new tool status message
+                const statusContainer = document.createElement('div');
+                statusContainer.className = 'tool-status-message-container';
+                statusContainer.innerHTML = `
+                    <div class="tool-status-card">
+                        <div class="tool-status-header">
+                            <div class="spinner-icon"></div>
+                            <span class="tool-status-title">工具执行中</span>
+                        </div>
+                        <div class="tool-status-content">${message}</div>
+                    </div>
+                `;
+
+                transcriptDiv.appendChild(statusContainer);
+
+                // Auto scroll to bottom
+                transcriptDiv.scrollTo({
+                    top: transcriptDiv.scrollHeight,
+                    behavior: 'smooth'
+                });
+            } else if (status === 'completed') {
+                // Remove the status message and show completion
+                const existingStatus = transcriptDiv.querySelector('.tool-status-message-container');
+                if (existingStatus) {
+                    // Update to completion state
+                    existingStatus.innerHTML = `
+                        <div class="tool-status-card completed">
+                            <div class="tool-status-header">
+                                <i class="fas fa-check-circle" style="color: #10B981;"></i>
+                                <span class="tool-status-title">工具执行完成</span>
+                            </div>
+                            <div class="tool-status-content">${message}</div>
+                        </div>
+                    `;
+
+                    // Remove after 3 seconds
+                    setTimeout(() => {
+                        existingStatus.style.opacity = '0';
+                        existingStatus.style.transition = 'opacity 0.5s ease-out';
+                        setTimeout(() => existingStatus.remove(), 500);
+                    }, 3000);
+                }
             }
         }
 
@@ -1668,6 +1959,119 @@
                     switchVoice(btn.dataset.voice);
                 });
             });
+
+            // Tool information database
+            const toolInfo = {
+                'getDateAndTimeTool': {
+                    description: '获取当前日期和时间信息，包括年月日、星期、时区等详细信息。',
+                    sampleInput: '{}',
+                    sampleOutput: '{"formattedTime": "02:30 PM", "date": "2025-12-15", "year": 2025, "month": 12, "day": 15, "dayOfWeek": "MONDAY", "timezone": "PST"}'
+                },
+                'trackOrderTool': {
+                    description: '通过订单号追踪订单状态，提供预计送达时间和当前物流信息。',
+                    sampleInput: '{"orderId": "1234", "requestNotifications": false}',
+                    sampleOutput: '{"orderStatus": "In transit", "orderNumber": "1234", "estimatedDelivery": "2025-12-18", "currentLocation": "Distribution Center"}'
+                },
+                'getWeatherTool': {
+                    description: '查询指定城市的天气情况，包括温度、湿度、风速等气象信息。',
+                    sampleInput: '{"location": "Beijing", "unit": "celsius"}',
+                    sampleOutput: '{"location": "Beijing", "temperature": 15, "condition": "Sunny", "humidity": 45, "windSpeed": 12, "unit": "celsius"}'
+                },
+                'getMoodSuggestionTool': {
+                    description: '根据用户当前心情提供个性化的活动建议，帮助改善情绪。',
+                    sampleInput: '{"mood": "stressed", "preferences": "relaxing activities"}',
+                    sampleOutput: '{"suggestions": ["冥想10分钟", "听轻音乐", "散步放松"], "mood": "stressed", "status": "success"}'
+                },
+                'searchTool': {
+                    description: '使用 EXA 搜索引擎进行互联网搜索，获取最新的信息和资讯。',
+                    sampleInput: '{"query": "最新AI技术发展"}',
+                    sampleOutput: '{"results": ["result1", "result2"], "query": "最新AI技术发展", "status": "success"}'
+                },
+                'speakerControlTool': {
+                    description: '控制智能音箱，支持开关、音量调节和状态查询等功能。',
+                    sampleInput: '{"action": "volume_up", "deviceId": "living_room_speaker"}',
+                    sampleOutput: '{"device_id": "living_room_speaker", "power": true, "volume": 7, "message": "Increased volume to 7", "status": "success"}'
+                },
+                'travelPlanningTool': {
+                    description: '为用户制定详细的旅行计划。异步调用天气、景点、美食等多个信息源，生成包含每日行程的完整旅行方案。支持异步调用，不会阻塞对话。',
+                    sampleInput: '{"destination": "北京", "days": 3, "preferences": "文化历史"}',
+                    sampleOutput: '{"destination": "北京", "days": 3, "weather": {...}, "itinerary": [{"day": 1, "activities": ["上午：游览故宫", "中午：品尝北京烤鸭", "下午：参观天安门广场"]}], "attractions": [...], "food_recommendations": [...], "status": "success"}',
+                    isAsync: true
+                }
+            };
+
+            // Set up tool item click listeners
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all items
+                    document.querySelectorAll('.tool-item').forEach(i => i.classList.remove('active'));
+
+                    // Add active class to clicked item
+                    this.classList.add('active');
+
+                    // Get tool name and info
+                    const toolName = this.dataset.tool;
+                    const toolLabel = this.querySelector('span:first-of-type').textContent;
+                    const info = toolInfo[toolName];
+
+                    if (!info) return;
+
+                    // Show tool info in modal
+                    showToolInfoModal(toolLabel, info);
+                });
+            });
+        });
+
+        // Function to show tool info modal
+        function showToolInfoModal(toolLabel, info) {
+            const modal = document.getElementById('toolInfoModal');
+            const modalTitle = document.getElementById('toolInfoModalTitle');
+            const modalContent = document.getElementById('toolInfoModalContent');
+
+            // Set modal title
+            modalTitle.innerHTML = `
+                <i class="fas fa-tools"></i>
+                ${toolLabel}
+                ${info.isAsync ? '<span class="async-indicator">ASYNC</span>' : ''}
+            `;
+
+            // Set modal content
+            modalContent.innerHTML = `
+                <div class="tool-modal-section">
+                    <h4 class="tool-modal-section-title">📝 描述</h4>
+                    <p class="tool-modal-description">${info.description}</p>
+                </div>
+                <div class="tool-modal-section">
+                    <h4 class="tool-modal-section-title">📥 Sample Input</h4>
+                    <pre class="tool-modal-code">${info.sampleInput}</pre>
+                </div>
+                <div class="tool-modal-section">
+                    <h4 class="tool-modal-section-title">📤 Sample Output</h4>
+                    <pre class="tool-modal-code">${info.sampleOutput}</pre>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.add('active');
+        }
+
+        // Close tool info modal
+        window.addEventListener('load', () => {
+            const closeBtn = document.getElementById('closeToolInfoModal');
+            const modal = document.getElementById('toolInfoModal');
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    modal.classList.remove('active');
+                });
+            }
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
         });
 
         // Add this to the existing JavaScript
@@ -1739,37 +2143,22 @@
     <script src="/static/js/main.js"></script>
     <!-- Add the tool-logs.js script for tool logging functionality -->
     <script src="/static/js/tool-logs.js"></script>
-    <!-- Add the tool-details.js script for tool details functionality -->
-    <script src="/static/js/tool-details.js"></script>
-    
 
-    <!-- Tool Details Modal -->
-    <div class="modal-overlay" id="toolDetailsModal">
-        <div class="modal-container">
+    <!-- Tool Info Modal -->
+    <div class="modal-overlay" id="toolInfoModal">
+        <div class="modal-container" style="max-width: 750px;">
             <div class="modal-header">
-                <h3 class="modal-title" id="modalToolTitle">Tool Details</h3>
-                <button class="modal-close" id="closeToolDetailsModal">
+                <h3 class="modal-title" id="toolInfoModalTitle">Tool Information</h3>
+                <button class="modal-close" id="closeToolInfoModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-content">
-                <div class="tool-details-section">
-                    <h4 class="tool-details-section-title">Description</h4>
-                    <p class="tool-details-description" id="toolDescription"></p>
-                </div>
-                <div class="tool-details-section">
-                    <h4 class="tool-details-section-title">Sample Input</h4>
-                    <pre class="tool-details-code" id="toolSampleInput"></pre>
-                </div>
-                <div class="tool-details-section">
-                    <h4 class="tool-details-section-title">Sample Output</h4>
-                    <pre class="tool-details-code" id="toolSampleOutput"></pre>
-                </div>
+            <div class="modal-content" id="toolInfoModalContent">
+                <!-- Tool details will be inserted here -->
             </div>
         </div>
     </div>
 
-    <!-- Nova Sonic 2 Feature Announcement Modal -->
     <div class="modal-overlay" id="novaSonic2Modal">
         <div class="modal-container" style="max-width: 700px;">
             <div class="modal-header">
