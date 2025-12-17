@@ -48,6 +48,10 @@ AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'password')
 
+# Dashboard authentication credentials
+DASHBOARD_USERNAME = os.getenv('DASHBOARD_USERNAME', 'teague')
+DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD', 'teague')
+
 # Session configuration
 # Check if session authentication is enabled
 SESSION_ENABLE = os.getenv('SESSION_ENABLE', 'true').lower() == 'true'
@@ -84,6 +88,9 @@ active_connections = {}
 
 # Store active sessions with expiry times
 active_sessions = {}
+
+# Store dashboard sessions separately
+dashboard_sessions = {}
 
 # Function to verify login credentials
 def verify_credentials(username: str, password: str) -> bool:
@@ -1484,9 +1491,215 @@ async def get_timeline_data(session: Optional[str] = Cookie(None)):
 async def get_tool_logs(session: Optional[str] = Cookie(None)):
     if not verify_session(session):
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     # Return the tool logs from the tool manager
     return tool_manager.get_tool_logs()
+
+# ==================== Dashboard Routes ====================
+
+DASHBOARD_SESSION_COOKIE = "dashboard_session"
+
+def verify_dashboard_credentials(username: str, password: str) -> bool:
+    return username == DASHBOARD_USERNAME and password == DASHBOARD_PASSWORD
+
+def verify_dashboard_session(session_token: Optional[str]) -> bool:
+    if not session_token:
+        return False
+
+    # Clean expired sessions
+    current_time = time.time()
+    expired = [t for t, s in dashboard_sessions.items() if current_time > s['expiry']]
+    for t in expired:
+        del dashboard_sessions[t]
+
+    if session_token in dashboard_sessions:
+        session = dashboard_sessions[session_token]
+        if current_time <= session['expiry']:
+            session['expiry'] = current_time + SESSION_EXPIRY
+            return True
+        del dashboard_sessions[session_token]
+
+    return False
+
+@app.get("/dashboard/login")
+async def get_dashboard_login(request: Request, error: str = None):
+    return templates.TemplateResponse("dashboard_login.html", {"request": request, "error": error})
+
+@app.post("/dashboard/login")
+async def post_dashboard_login(
+    response: Response,
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    if verify_dashboard_credentials(username, password):
+        session_token = secrets.token_urlsafe(32)
+        dashboard_sessions[session_token] = {
+            'username': username,
+            'expiry': time.time() + SESSION_EXPIRY
+        }
+        response = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+        response.set_cookie(
+            key=DASHBOARD_SESSION_COOKIE,
+            value=session_token,
+            max_age=SESSION_EXPIRY,
+            httponly=True,
+            samesite="lax"
+        )
+        return response
+
+    return RedirectResponse(
+        url="/dashboard/login?error=Invalid username or password",
+        status_code=status.HTTP_303_SEE_OTHER
+    )
+
+@app.get("/dashboard/logout")
+async def dashboard_logout(response: Response, dashboard_session: Optional[str] = Cookie(None)):
+    if dashboard_session and dashboard_session in dashboard_sessions:
+        del dashboard_sessions[dashboard_session]
+
+    response = RedirectResponse(url="/dashboard/login", status_code=status.HTTP_303_SEE_OTHER)
+    response.delete_cookie(key=DASHBOARD_SESSION_COOKIE)
+    return response
+
+@app.get("/dashboard")
+async def get_dashboard(request: Request, dashboard_session: Optional[str] = Cookie(None)):
+    if not verify_dashboard_session(dashboard_session):
+        return RedirectResponse(url="/dashboard/login", status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/dashboard/stats")
+async def get_dashboard_stats(
+    dashboard_session: Optional[str] = Cookie(None),
+    time_range: str = "all"
+):
+    if not verify_dashboard_session(dashboard_session):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    try:
+        with open("aws_info.txt", "r") as f:
+            data = json.load(f)
+            if not isinstance(data, list):
+                data = [data]
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = []
+
+    if not data:
+        return {
+            "total_logins": 0,
+            "unique_users": 0,
+            "unique_customers": 0,
+            "today_logins": 0,
+            "daily_stats": [],
+            "hourly_stats": [0] * 24,
+            "user_ranking": [],
+            "customer_ranking": [],
+            "weekly_heatmap": [[0] * 24 for _ in range(7)],
+            "new_users_today": 0,
+            "growth_rate": 0
+        }
+
+    # Parse timestamps - use naive datetime for consistency
+    now = datetime.now()
+    today = now.date()
+
+    # Helper to parse timestamp safely
+    def parse_ts(ts_str):
+        dt = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+        # Remove timezone info to make naive datetime
+        return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
+    # Filter by time range
+    if time_range == "today":
+        data = [d for d in data if parse_ts(d['timestamp']).date() == today]
+    elif time_range == "week":
+        week_ago = today - timedelta(days=7)
+        data = [d for d in data if parse_ts(d['timestamp']).date() >= week_ago]
+    elif time_range == "month":
+        month_ago = today - timedelta(days=30)
+        data = [d for d in data if parse_ts(d['timestamp']).date() >= month_ago]
+
+    # Basic stats
+    total_logins = len(data)
+    unique_users = len(set(d['aws_alias'] for d in data))
+    unique_customers = len(set(d['customer_name'] for d in data))
+
+    # Today's stats
+    today_data = [d for d in data if parse_ts(d['timestamp']).date() == today]
+    today_logins = len(today_data)
+
+    # Daily stats (last 30 days)
+    daily_counts = {}
+    user_first_seen = {}
+
+    for d in data:
+        dt = parse_ts(d['timestamp'])
+        date_str = dt.strftime('%Y-%m-%d')
+        daily_counts[date_str] = daily_counts.get(date_str, 0) + 1
+
+        # Track first seen date for each user
+        alias = d['aws_alias']
+        if alias not in user_first_seen or dt < user_first_seen[alias]:
+            user_first_seen[alias] = dt
+
+    # Sort and get last 30 days
+    sorted_dates = sorted(daily_counts.keys())[-30:]
+    daily_stats = [{"date": d, "count": daily_counts[d]} for d in sorted_dates]
+
+    # Hourly distribution
+    hourly_stats = [0] * 24
+    for d in data:
+        hour = parse_ts(d['timestamp']).hour
+        hourly_stats[hour] += 1
+
+    # User ranking (top 10)
+    user_counts = {}
+    for d in data:
+        alias = d['aws_alias']
+        user_counts[alias] = user_counts.get(alias, 0) + 1
+    user_ranking = sorted(user_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    user_ranking = [{"user": u, "count": c} for u, c in user_ranking]
+
+    # Customer ranking (top 10)
+    customer_counts = {}
+    for d in data:
+        cust = d['customer_name']
+        customer_counts[cust] = customer_counts.get(cust, 0) + 1
+    customer_ranking = sorted(customer_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    customer_ranking = [{"customer": c, "count": cnt} for c, cnt in customer_ranking]
+
+    # Weekly heatmap (7 days x 24 hours)
+    weekly_heatmap = [[0] * 24 for _ in range(7)]
+    for d in data:
+        dt = parse_ts(d['timestamp'])
+        weekday = dt.weekday()
+        hour = dt.hour
+        weekly_heatmap[weekday][hour] += 1
+
+    # New users today
+    new_users_today = sum(1 for alias, first_dt in user_first_seen.items()
+                          if first_dt.date() == today)
+
+    # Growth rate (compared to yesterday)
+    yesterday = today - timedelta(days=1)
+    yesterday_str = yesterday.strftime('%Y-%m-%d')
+    today_str = today.strftime('%Y-%m-%d')
+    yesterday_count = daily_counts.get(yesterday_str, 0)
+    today_count = daily_counts.get(today_str, 0)
+    growth_rate = ((today_count - yesterday_count) / yesterday_count * 100) if yesterday_count > 0 else 0
+
+    return {
+        "total_logins": total_logins,
+        "unique_users": unique_users,
+        "unique_customers": unique_customers,
+        "today_logins": today_logins,
+        "daily_stats": daily_stats,
+        "hourly_stats": hourly_stats,
+        "user_ranking": user_ranking,
+        "customer_ranking": customer_ranking,
+        "weekly_heatmap": weekly_heatmap,
+        "new_users_today": new_users_today,
+        "growth_rate": round(growth_rate, 1)
+    }
 
 if __name__ == "__main__":
     import uvicorn
