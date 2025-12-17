@@ -71,6 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let isRecording = false;
     let clientId = null;
     let lastBargeInTime = 0;  // Track last barge-in time to avoid spam
+    let isUserSpeaking = false;  // Track if user is currently speaking
+    let userSpeakingTimeout = null;  // Timeout to reset isUserSpeaking
     
     // Function to show status messages
     function showStatus(message, type = 'info') {
@@ -140,6 +142,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 playAudio(data.data);
             } else if (data.type === 'status') {
                 // Handle status updates
+                if (data.status === 'barge_in_handled') {
+                    // Server detected barge-in, clear local audio queue
+                    clearAudioQueue();
+                    console.log('[Barge-in] Server confirmed barge-in, cleared local audio queue');
+                }
                 showStatus(data.message, data.status === 'error' ? 'error' : 'info');
             } else if (data.type === 'latency') {
                 // Display latency information
@@ -171,27 +178,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to play audio
     function playAudio(base64Audio) {
         if (!base64Audio) return;
-        
+
+        // Skip audio if user is currently speaking (barge-in active)
+        if (isUserSpeaking) {
+            console.log('[Barge-in] Skipping audio because user is speaking');
+            return;
+        }
+
         try {
             // Convert base64 to array buffer
             const binaryString = window.atob(base64Audio);
             const len = binaryString.length;
             const bytes = new Uint8Array(len);
-            
+
             for (let i = 0; i < len; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
             }
-            
+
             // Create audio context if not exists
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)({
                     sampleRate: 24000
                 });
             }
-            
+
             // Queue the audio data
             audioQueue.push(bytes.buffer);
-            
+
             // If not already playing, start playing
             if (audioQueue.length === 1) {
                 playNextAudio();
@@ -225,9 +238,25 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Skip if user is speaking
+        if (isUserSpeaking) {
+            console.log('[Barge-in] Clearing remaining queue because user is speaking');
+            audioQueue = [];
+            currentAudioSource = null;
+            return;
+        }
+
         const audioBuffer = audioQueue[0];
 
         audioContext.decodeAudioData(audioBuffer, (buffer) => {
+            // Double-check user isn't speaking before playing
+            if (isUserSpeaking) {
+                console.log('[Barge-in] Skipping decoded audio because user started speaking');
+                audioQueue = [];
+                currentAudioSource = null;
+                return;
+            }
+
             const source = audioContext.createBufferSource();
             currentAudioSource = source;  // Track the current source
             source.buffer = buffer;
@@ -266,9 +295,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0 && ws && ws.readyState === WebSocket.OPEN) {
+                    // Mark user as speaking and reset timeout
+                    isUserSpeaking = true;
+                    if (userSpeakingTimeout) {
+                        clearTimeout(userSpeakingTimeout);
+                    }
+                    // Reset isUserSpeaking after 800ms of no audio data
+                    userSpeakingTimeout = setTimeout(() => {
+                        isUserSpeaking = false;
+                        console.log('[Barge-in] User stopped speaking');
+                    }, 800);
+
                     // Check if AI is currently speaking (audio playing or queued)
                     const now = Date.now();
-                    if ((audioQueue.length > 0 || currentAudioSource) && (now - lastBargeInTime > 500)) {
+                    if ((audioQueue.length > 0 || currentAudioSource) && (now - lastBargeInTime > 300)) {
                         // Clear audio queue when user starts speaking (barge-in)
                         clearAudioQueue();
 
@@ -324,6 +364,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             isRecording = false;
             lastBargeInTime = 0;  // Reset barge-in timer
+            isUserSpeaking = false;  // Reset user speaking state
+            if (userSpeakingTimeout) {
+                clearTimeout(userSpeakingTimeout);
+                userSpeakingTimeout = null;
+            }
             startButton.disabled = false;
             stopButton.disabled = true;
             if (micVisualizer) {

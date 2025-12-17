@@ -371,6 +371,7 @@ class StreamManager:
         self.role = None
         self.display_assistant_text = False
         self.barge_in = False
+        self.barge_in_time = 0  # Timestamp when barge-in was triggered
         self.audio_output_queue = asyncio.Queue()
         self.response_task = None
         self.audio_task = None
@@ -683,6 +684,22 @@ class StreamManager:
     async def _handle_content_start(self, content_start):
         """Handle content start events with speculative generation control."""
         self.role = content_start['role']
+
+        # Reset barge-in flag when new ASSISTANT response starts (not speculative)
+        # Only reset if at least 2 seconds have passed since barge-in was triggered
+        if self.role == 'ASSISTANT' and self.barge_in:
+            time_since_barge_in = time.time() - self.barge_in_time
+            if time_since_barge_in >= 2.0:  # Wait 2 seconds before allowing reset
+                additional_fields_str = content_start.get('additionalModelFields', '{}')
+                try:
+                    additional_fields = json.loads(additional_fields_str)
+                    is_speculative = additional_fields.get('generationStage') == 'SPECULATIVE'
+                    if not is_speculative:
+                        self.barge_in = False
+                        print(f"[DEBUG] Reset barge-in flag on new ASSISTANT response (after {time_since_barge_in:.1f}s)")
+                except json.JSONDecodeError:
+                    pass
+
         if 'additionalModelFields' in content_start:
             try:
                 additional_fields = json.loads(content_start['additionalModelFields'])
@@ -706,6 +723,7 @@ class StreamManager:
         # Handle barge-in detection
         if '{ "interrupted" : true }' in text_content:
             self.barge_in = True
+            self.barge_in_time = current_time
             print(f"[{formatted_time}] Barge-in detected")
             return
 
@@ -753,6 +771,10 @@ class StreamManager:
 
     async def _handle_audio_output(self, audio_output):
         """Handle audio output events."""
+        # Skip audio if barge-in is active
+        if self.barge_in:
+            return
+
         audio_content = audio_output['content']
         await self.audio_output_queue.put(audio_content)
         
@@ -806,11 +828,11 @@ class StreamManager:
                             self.audio_output_queue.get_nowait()
                         except asyncio.QueueEmpty:
                             break
-                    
+
                     # Reset buffer
                     self.audio_buffer = []
                     self.buffer_size = 0
-                    self.barge_in = False
+                    # Note: barge_in flag is reset in _handle_content_start when new ASSISTANT response starts
                     print(f"Cleared audio buffer for client #{self.client_id} due to barge-in")
                     await asyncio.sleep(0.05)  # Increased from 0.01 to match sample code
                     continue
@@ -1173,6 +1195,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
                     # Handle barge-in by setting the flag
                     print(f"Barge-in detected for client #{client_id}")
                     stream_manager.barge_in = True
+                    stream_manager.barge_in_time = time.time()
                     # Clear any pending audio in the queue
                     while not stream_manager.audio_output_queue.empty():
                         try:
@@ -1321,7 +1344,7 @@ class AudioStreamer:
                             self.stream_manager.audio_output_queue.get_nowait()
                         except asyncio.QueueEmpty:
                             break
-                    self.stream_manager.barge_in = False
+                    # Note: barge_in flag is reset in _handle_content_start when new ASSISTANT response starts
                     await asyncio.sleep(0.05)  # Matches sample code timing
                     continue
                 

@@ -890,17 +890,55 @@ class ToolManager:
 
             print(f"Completed travel plan for {destination}")
 
-            # 5. Return structured plan
+            # 5. Generate concise daily summaries (one sentence per day)
+            # Weather info
+            weather_summary = ""
+            if weather_info and weather_info.get("status") == "success":
+                temp = weather_info.get("temperature", "")
+                condition = weather_info.get("condition", "")
+                weather_summary = f"Weather: {temp}, {condition}." if temp else ""
+
+            # Generate one-sentence summary for each day
+            daily_summaries = []
+            for day_plan in itinerary:
+                day_num = day_plan.get("day", 1)
+                activities = day_plan.get("activities", [])
+
+                # Extract attraction and food from activities
+                day_attraction = ""
+                day_food = ""
+                for act in activities:
+                    if "Visit" in act or "Tour" in act or "Explore" in act:
+                        # Extract location name
+                        parts = act.split(": ", 1)
+                        if len(parts) > 1:
+                            day_attraction = parts[1].replace("Visit ", "").replace("Tour ", "").replace("Explore ", "")
+                            break
+                for act in activities:
+                    if "Try" in act or "Lunch" in act:
+                        parts = act.split(": ", 1)
+                        if len(parts) > 1:
+                            day_food = parts[1].replace("Try ", "")
+                            break
+
+                # Build one-sentence summary for this day
+                if day_attraction and day_food:
+                    summary = f"Day {day_num}: Visit {day_attraction}, try {day_food}."
+                elif day_attraction:
+                    summary = f"Day {day_num}: Visit {day_attraction}."
+                else:
+                    summary = f"Day {day_num}: Free exploration and local experiences."
+
+                daily_summaries.append(summary)
+
+            # Combine into final summary
+            plan_summary = f"{days}-day trip to {destination}. {weather_summary} " + " ".join(daily_summaries)
+
             return {
+                "summary": plan_summary.strip(),
                 "destination": destination,
                 "days": days,
-                "preferences": preferences if preferences else "No specific preferences",
-                "weather": weather_info,
-                "itinerary": itinerary,
-                "attractions": attractions,
-                "food_recommendations": food,
-                "status": "success",
-                "processing_time": "Approximately 5-10 seconds"
+                "status": "success"
             }
 
         except Exception as e:
@@ -974,7 +1012,7 @@ class ToolManager:
                         "description": answer_text
                     }]
 
-            return attractions[:10]  # Return up to 10 attractions
+            return attractions[:5]  # Return up to 5 attractions (reduced to avoid Nova Sonic instability)
 
         except Exception as e:
             print(f"Attraction search failed: {e}")
@@ -1024,7 +1062,7 @@ class ToolManager:
                         "description": answer_text
                     }]
 
-            return food_items[:8]  # Return up to 8 food recommendations
+            return food_items[:4]  # Return up to 4 food recommendations (reduced to avoid Nova Sonic instability)
 
         except Exception as e:
             print(f"Food search failed: {e}")

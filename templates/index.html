@@ -474,72 +474,64 @@
 
         .chat-interface {
             display: flex;
-            flex-direction: row;
             align-items: center;
-            justify-content: flex-start;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            justify-content: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
         }
 
         .microphone-container {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
         }
 
-        .status-badge {
+        .mic-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            background: #F3F4F6;
-            color: #6B7280;
-            border: 2px solid #E5E7EB;
+            justify-content: center;
             transition: all 0.3s ease;
         }
 
-        .status-badge i {
-            font-size: 0.5rem;
+        .mic-wrapper.recording {
+            width: 120px;
+            height: 120px;
         }
 
-        .status-badge.ready {
-            background: #F3F4F6;
+        #ringVisualizer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #ringVisualizer.active {
+            opacity: 1;
+        }
+
+        .mic-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        .mic-status .status-text {
+            font-size: 0.875rem;
             color: #6B7280;
-            border-color: #E5E7EB;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
-        .status-badge.ready i {
-            color: #9CA3AF;
-        }
-
-        .status-badge.recording {
-            background: #FEE2E2;
-            color: #DC2626;
-            border-color: #FCA5A5;
-            animation: pulse 2s infinite;
-        }
-
-        .status-badge.recording i {
-            color: #DC2626;
-            animation: blink 1s infinite;
-        }
-
-        .status-badge.error {
-            background: #FEE2E2;
-            color: #DC2626;
-            border-color: #FCA5A5;
-        }
-
-        .status-badge.error i {
+        .mic-status.recording .status-text {
             color: #DC2626;
         }
 
@@ -582,6 +574,24 @@
 
         .microphone-visualizer.recording i {
             color: #DC2626;
+        }
+
+        .microphone-visualizer.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .microphone-visualizer.clickable:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        }
+
+        .microphone-visualizer.clickable:active {
+            transform: scale(0.95);
+        }
+
+        .microphone-visualizer.recording:hover {
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
         }
 
         .controls {
@@ -630,14 +640,7 @@
             transform: none !important;
         }
 
-        #visualizer {
-            width: 350px;
-            height: 60px;
-            background: var(--secondary-color);
-            border-radius: 0.75rem;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
+        /* Ring visualizer is now used instead of linear visualizer */
 
         /* Tool Status Display in Transcript */
         .tool-status-message-container {
@@ -1899,23 +1902,16 @@
                 <div class="right-panel">
                     <div class="chat-interface">
                         <div class="microphone-container">
-                            <div class="status-badge" id="statusBadge">
-                                <i class="fas fa-circle"></i>
-                                <span id="statusText">Ready</span>
+                            <div class="mic-wrapper" id="micWrapper">
+                                <canvas id="ringVisualizer" width="120" height="120"></canvas>
+                                <div class="microphone-visualizer clickable" id="micVisualizer" title="Click to start talking">
+                                    <i class="fa fas fa-microphone" id="micIcon"></i>
+                                </div>
                             </div>
-                            <div class="microphone-visualizer" id="micVisualizer">
-                                <i class="fa fas fa-microphone"></i>
+                            <div class="mic-status" id="micStatus">
+                                <span class="status-text" id="statusText">Click to talk</span>
                             </div>
                         </div>
-
-                        <div class="controls">
-                            <button id="toggleButton" class="btn btn-primary">
-                                <i class="fa fas fa-microphone"></i>
-                                <span id="toggleButtonText">Start Talking</span>
-                            </button>
-                        </div>
-
-                        <div id="visualizer"></div>
                     </div>
                     <div id="transcript">
                         <!-- Welcome screen with example prompts -->
@@ -1951,7 +1947,7 @@
                                 </div>
                             </div>
                             <div class="welcome-footer">
-                                <p><i class="fas fa-info-circle"></i> Click the microphone button above to start talking</p>
+                                <p><i class="fas fa-info-circle"></i> Click the microphone above to start</p>
                             </div>
                         </div>
                     </div>
@@ -1982,7 +1978,7 @@
             <div class="sample-code">
                 <h2>Sample Code Repository</h2>
                 <p>Explore official AWS samples and examples for Nova Sonic integration</p>
-                <a href="https://github.com/teaguexiao/web-nova-sonic" target="_blank" class="github-link">
+                <a href="https://github.com/aws-samples/amazon-nova-samples/tree/main/speech-to-speech/amazon-nova-2-sonic/sample-codes" target="_blank" class="github-link">
                     <i class="fa fab fa-github"></i>
                     View on GitHub
                 </a>
@@ -2693,49 +2689,87 @@
             return int16Array;
         }
 
-        // Set up audio visualizer
+        // Set up ring audio visualizer
         function setupVisualizer() {
-            const canvas = document.createElement('canvas');
-            const visualizer = document.getElementById('visualizer');
-            visualizer.innerHTML = '';
-            visualizer.appendChild(canvas);
+            const canvas = document.getElementById('ringVisualizer');
             const canvasCtx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const innerRadius = 42; // Slightly larger than mic button (80px / 2 = 40)
+            const maxOuterRadius = 58;
 
-            canvas.width = visualizer.offsetWidth;
-            canvas.height = visualizer.offsetHeight;
-
-            analyser.fftSize = 2048;
+            analyser.fftSize = 256;
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
 
             function draw() {
                 requestAnimationFrame(draw);
-                analyser.getByteTimeDomainData(dataArray);
 
-                canvasCtx.fillStyle = 'rgb(200, 200, 200)';
-                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-                canvasCtx.lineWidth = 2;
-                canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
-                canvasCtx.beginPath();
+                // Clear canvas
+                canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-                const sliceWidth = canvas.width * 1.0 / bufferLength;
-                let x = 0;
-
-                for (let i = 0; i < bufferLength; i++) {
-                    const v = dataArray[i] / 128.0;
-                    const y = v * canvas.height / 2;
-
-                    if (i === 0) {
-                        canvasCtx.moveTo(x, y);
-                    } else {
-                        canvasCtx.lineTo(x, y);
-                    }
-
-                    x += sliceWidth;
+                if (!isRecording) {
+                    return; // Don't draw when not recording
                 }
 
-                canvasCtx.lineTo(canvas.width, canvas.height / 2);
-                canvasCtx.stroke();
+                analyser.getByteFrequencyData(dataArray);
+
+                // Calculate average volume
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / bufferLength;
+                const normalizedAvg = average / 255;
+
+                // Draw multiple ring layers for depth effect
+                const numRings = 3;
+                for (let ring = 0; ring < numRings; ring++) {
+                    const ringProgress = (ring + 1) / numRings;
+                    const baseRadius = innerRadius + (maxOuterRadius - innerRadius) * ringProgress * normalizedAvg;
+
+                    // Draw segments around the ring
+                    const segments = 32;
+                    for (let i = 0; i < segments; i++) {
+                        const dataIndex = Math.floor((i / segments) * bufferLength);
+                        const value = dataArray[dataIndex] / 255;
+
+                        const angle = (i / segments) * Math.PI * 2 - Math.PI / 2;
+                        const nextAngle = ((i + 1) / segments) * Math.PI * 2 - Math.PI / 2;
+
+                        const radiusVariation = value * 15 * ringProgress;
+                        const currentRadius = baseRadius + radiusVariation;
+
+                        // Gradient color from purple to red based on intensity
+                        const hue = 270 - (value * 50); // Purple to pink
+                        const saturation = 70 + (value * 30);
+                        const lightness = 50 + (value * 20);
+                        const alpha = 0.3 + (value * 0.5) * (1 - ring * 0.2);
+
+                        canvasCtx.beginPath();
+                        canvasCtx.arc(centerX, centerY, innerRadius, angle, nextAngle);
+                        canvasCtx.arc(centerX, centerY, currentRadius, nextAngle, angle, true);
+                        canvasCtx.closePath();
+
+                        canvasCtx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
+                        canvasCtx.fill();
+                    }
+                }
+
+                // Draw pulsing outer glow
+                const glowRadius = maxOuterRadius + normalizedAvg * 10;
+                const gradient = canvasCtx.createRadialGradient(
+                    centerX, centerY, innerRadius,
+                    centerX, centerY, glowRadius
+                );
+                gradient.addColorStop(0, 'rgba(124, 58, 237, 0)');
+                gradient.addColorStop(0.5, `rgba(124, 58, 237, ${normalizedAvg * 0.2})`);
+                gradient.addColorStop(1, 'rgba(124, 58, 237, 0)');
+
+                canvasCtx.beginPath();
+                canvasCtx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
+                canvasCtx.fillStyle = gradient;
+                canvasCtx.fill();
             }
 
             draw();
@@ -2748,21 +2782,21 @@
             }
             isRecording = true;
 
-            // Update toggle button to Stop state
-            const toggleButton = document.getElementById('toggleButton');
-            const toggleButtonText = document.getElementById('toggleButtonText');
-            const toggleButtonIcon = toggleButton.querySelector('i');
-
-            toggleButton.classList.remove('btn-primary');
-            toggleButton.classList.add('btn-secondary');
-            toggleButtonIcon.className = 'fa fas fa-stop';
-            toggleButtonText.textContent = 'Stop Talking';
-
-            const statusBadge = document.getElementById('statusBadge');
+            // Update microphone icon to stop state
+            const micIcon = document.getElementById('micIcon');
+            const micWrapper = document.getElementById('micWrapper');
+            const micStatus = document.getElementById('micStatus');
             const statusText = document.getElementById('statusText');
-            statusText.textContent = 'Recording';
-            statusBadge.className = 'status-badge recording';
+            const ringCanvas = document.getElementById('ringVisualizer');
+
+            micIcon.className = 'fa fas fa-stop';
+            micVisualizer.title = 'Click to stop';
             micVisualizer.classList.add('recording');
+            micWrapper.classList.add('recording');
+            micStatus.classList.add('recording');
+            statusText.textContent = 'Recording...';
+            ringCanvas.classList.add('active');
+
             console.log('Started recording');
         }
 
@@ -2772,22 +2806,27 @@
 
             isRecording = false;
 
-            // Update toggle button to Start state
-            const toggleButton = document.getElementById('toggleButton');
-            const toggleButtonText = document.getElementById('toggleButtonText');
-            const toggleButtonIcon = toggleButton.querySelector('i');
-
-            toggleButton.classList.remove('btn-secondary');
-            toggleButton.classList.add('btn-primary');
-            toggleButtonIcon.className = 'fa fas fa-microphone';
-            toggleButtonText.textContent = 'Start Talking';
-
-            const statusBadge = document.getElementById('statusBadge');
+            // Update microphone icon to start state
+            const micIcon = document.getElementById('micIcon');
+            const micWrapper = document.getElementById('micWrapper');
+            const micStatus = document.getElementById('micStatus');
             const statusText = document.getElementById('statusText');
-            statusText.textContent = 'Ready';
-            statusBadge.className = 'status-badge ready';
+            const ringCanvas = document.getElementById('ringVisualizer');
+
+            micIcon.className = 'fa fas fa-microphone';
+            micVisualizer.title = 'Click to talk';
             micVisualizer.classList.remove('recording');
-            
+            micWrapper.classList.remove('recording');
+            micStatus.classList.remove('recording');
+            statusText.textContent = 'Click to talk';
+            ringCanvas.classList.remove('active');
+
+            // Clear ring visualizer
+            if (ringCanvas) {
+                const ctx = ringCanvas.getContext('2d');
+                ctx.clearRect(0, 0, ringCanvas.width, ringCanvas.height);
+            }
+
             try {
                 // Send end event and handle cleanup
                 if (ws && ws.readyState === WebSocket.OPEN) {
@@ -2858,8 +2897,8 @@
             }
         }
 
-        // Set up event listeners
-        document.getElementById('toggleButton').addEventListener('click', () => {
+        // Set up event listeners - click on microphone visualizer to toggle recording
+        document.getElementById('micVisualizer').addEventListener('click', () => {
             if (isRecording) {
                 stopRecording().catch(console.error);
             } else {
@@ -3393,5 +3432,8 @@
             </div>
         </div>
     </div>
+    <footer style="text-align: center; padding: 1.5rem; color: #6B7280; font-size: 0.85rem; margin-top: 2rem;">
+        Powered by Teague & Claude Code
+    </footer>
 </body>
 </html> 
