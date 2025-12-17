@@ -2142,10 +2142,24 @@
 
         // Start network monitoring
         function startNetworkMonitoring() {
-            if (networkDetector.isMonitoring) return;
+            console.log('[Network] Starting network monitoring...');
+            if (networkDetector.isMonitoring) {
+                console.log('[Network] Already monitoring, skipping');
+                return;
+            }
 
             networkDetector.isMonitoring = true;
             networkDetector.consecutiveFailures = 0;
+
+            // Send ping immediately on start
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                networkDetector.lastPingTime = Date.now();
+                ws.send(JSON.stringify({
+                    type: 'ping',
+                    timestamp: networkDetector.lastPingTime
+                }));
+                console.log('[Network] Sent initial ping');
+            }
 
             // Send ping every 2 seconds
             networkDetector.pingInterval = setInterval(() => {
@@ -2155,13 +2169,16 @@
                         type: 'ping',
                         timestamp: networkDetector.lastPingTime
                     }));
+                    console.log('[Network] Sent ping at', networkDetector.lastPingTime);
                 } else {
                     networkDetector.consecutiveFailures++;
+                    console.log('[Network] WebSocket not open, failures:', networkDetector.consecutiveFailures);
                     if (networkDetector.consecutiveFailures >= 3) {
                         markNetworkOffline();
                     }
                 }
             }, 2000);
+            console.log('[Network] Network monitoring started');
         }
 
         // Stop network monitoring
@@ -2557,14 +2574,16 @@
 
             ws.onopen = () => {
                 console.log('WebSocket connected');
-                document.getElementById('toggleButton').disabled = false;
+                const toggleBtn = document.getElementById('toggleButton');
+                if (toggleBtn) toggleBtn.disabled = false;
                 // Start network monitoring when WebSocket is connected
                 startNetworkMonitoring();
             };
 
             ws.onclose = () => {
                 console.log('WebSocket disconnected');
-                document.getElementById('toggleButton').disabled = true;
+                const toggleBtn = document.getElementById('toggleButton');
+                if (toggleBtn) toggleBtn.disabled = true;
                 stopRecording();
                 // Stop network monitoring when WebSocket is disconnected
                 stopNetworkMonitoring();

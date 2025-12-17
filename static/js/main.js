@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ws.onopen = function() {
             console.log('WebSocket connection established');
             showStatus('Connected to server', 'success');
-            startButton.disabled = false;
+            if (startButton) startButton.disabled = false;
         };
         
         ws.onmessage = function(event) {
@@ -383,9 +383,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize WebSocket on page load
     initializeWebSocket();
     
-    // Event listeners for buttons
-    startButton.addEventListener('click', startRecording);
-    stopButton.addEventListener('click', stopRecording);
+    // Event listeners for buttons (only if elements exist)
+    if (startButton) startButton.addEventListener('click', startRecording);
+    if (stopButton) stopButton.addEventListener('click', stopRecording);
     
     // Clean up on page unload
     window.addEventListener('beforeunload', () => {

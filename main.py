@@ -796,23 +796,17 @@ class StreamManager:
         self.last_user_audio_time = None
 
     async def process_audio_chunk(self, audio_data):
-        """Process incoming audio chunk and detect speech end."""
+        """Process incoming audio chunk and track user speech time."""
         current_time = time.time()
 
-        # If this is empty audio (silence), start tracking silence duration
-        if not audio_data.strip():  # Empty base64 string
-            if self.silence_start_time is None:
-                self.silence_start_time = current_time
-            elif current_time - self.silence_start_time >= self.silence_threshold:
-                # We've detected end of speech
-                if self.last_user_audio_time is None:  # Only set if not already set
-                    self.last_user_audio_time = self.silence_start_time
-        else:
-            # We received audio data, reset silence tracking
-            self.silence_start_time = None
-            # If this is new speech, reset tracking
+        # Always update last_user_audio_time when we receive audio from user
+        # This tracks when the user was last speaking
+        if audio_data and len(audio_data) > 10:  # Valid audio data (not empty)
+            self.last_user_audio_time = current_time
+            # Reset first_assistant_response_time when user starts new speech
             if self.first_assistant_response_time is not None:
                 self._reset_speech_tracking()
+                self.last_user_audio_time = current_time
 
     async def _process_audio_output(self):
         """Process audio output from the queue and send to client with optimized buffering."""
@@ -1242,6 +1236,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
 
                 elif data["type"] == "ping":
                     # Handle ping request for network latency measurement
+                    print(f"[PING] Received ping from client #{client_id}, timestamp: {data.get('timestamp', 0)}")
                     await websocket.send_json({
                         "type": "pong",
                         "timestamp": data.get("timestamp", 0)
