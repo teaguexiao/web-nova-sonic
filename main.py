@@ -1217,6 +1217,13 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
                         # Send prompt end to trigger assistant response
                         await stream_manager.send_prompt_end_event()
 
+                elif data["type"] == "ping":
+                    # Handle ping request for network latency measurement
+                    await websocket.send_json({
+                        "type": "pong",
+                        "timestamp": data.get("timestamp", 0)
+                    })
+
                 elif data["type"] == "end":
                     print(f"Client #{client_id} ending stream")
                     # Properly close the stream before breaking

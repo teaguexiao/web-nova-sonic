@@ -265,6 +265,213 @@
             color: white;
         }
 
+        /* More Voices Button */
+        .more-voices-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            color: white;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .more-voices-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .more-voices-btn i {
+            font-size: 1rem;
+        }
+
+        .more-voices-btn.active-voice {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Voice Modal Styles */
+        .voice-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .voice-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .voice-modal-content {
+            background: white;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .voice-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .voice-modal-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .voice-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .voice-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .voice-modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(80vh - 80px);
+        }
+
+        .voice-language-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .voice-language-group h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .voice-language-group h3 i {
+            color: var(--primary-color);
+        }
+
+        .voice-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .voice-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #F9FAFB;
+            border: 2px solid #E5E7EB;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .voice-option:hover {
+            border-color: var(--primary-color);
+            background: #F5F3FF;
+            transform: translateY(-2px);
+        }
+
+        .voice-option.selected {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .voice-option.selected .voice-desc {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .voice-option i {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            width: 24px;
+        }
+
+        .voice-option.selected i {
+            color: white;
+        }
+
+        .voice-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .voice-desc {
+            font-size: 0.75rem;
+            color: #6B7280;
+            display: block;
+        }
+
+        /* Current voice indicator */
+        .current-voice-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #F5F3FF;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--primary-color);
+        }
+
+        .current-voice-indicator strong {
+            font-weight: 600;
+        }
+
         .chat-interface {
             display: flex;
             flex-direction: row;
@@ -768,6 +975,168 @@
         .logout-btn:hover {
             background: #F3F4F6;
             color: #DC2626;
+        }
+
+        /* Network Signal Detector Styles */
+        .network-signal-detector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .network-signal-detector:hover {
+            background: #F9FAFB;
+            border-color: var(--primary-color);
+        }
+
+        .signal-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 20px;
+        }
+
+        .signal-bar {
+            width: 4px;
+            border-radius: 2px;
+            background: #D1D5DB;
+            transition: all 0.3s ease;
+        }
+
+        .signal-bar.bar-1 {
+            height: 25%;
+        }
+
+        .signal-bar.bar-2 {
+            height: 50%;
+        }
+
+        .signal-bar.bar-3 {
+            height: 75%;
+        }
+
+        .signal-bar.bar-4 {
+            height: 100%;
+        }
+
+        /* Signal States */
+        .network-signal-detector.excellent .signal-bar {
+            background: #10B981;
+        }
+
+        .network-signal-detector.good .signal-bar.bar-1,
+        .network-signal-detector.good .signal-bar.bar-2,
+        .network-signal-detector.good .signal-bar.bar-3 {
+            background: #22C55E;
+        }
+
+        .network-signal-detector.fair .signal-bar.bar-1,
+        .network-signal-detector.fair .signal-bar.bar-2 {
+            background: #F59E0B;
+        }
+
+        .network-signal-detector.poor .signal-bar.bar-1 {
+            background: #F97316;
+        }
+
+        .network-signal-detector.bad .signal-bar.bar-1 {
+            background: #EF4444;
+            animation: signalBlink 1s infinite;
+        }
+
+        .network-signal-detector.offline .signal-bar {
+            background: #9CA3AF;
+        }
+
+        @keyframes signalBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .signal-latency {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-color);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Tooltip Styles */
+        .signal-tooltip {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            right: 0;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .network-signal-detector:hover .signal-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.35rem 0;
+            font-size: 0.875rem;
+        }
+
+        .tooltip-row:not(:last-child) {
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .tooltip-label {
+            color: #6B7280;
+            font-weight: 500;
+        }
+
+        .tooltip-value {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        /* Color coding for status */
+        .network-signal-detector.excellent .signal-latency {
+            color: #10B981;
+        }
+
+        .network-signal-detector.good .signal-latency {
+            color: #22C55E;
+        }
+
+        .network-signal-detector.fair .signal-latency {
+            color: #F59E0B;
+        }
+
+        .network-signal-detector.poor .signal-latency {
+            color: #F97316;
+        }
+
+        .network-signal-detector.bad .signal-latency {
+            color: #EF4444;
+        }
+
+        .network-signal-detector.offline .signal-latency {
+            color: #9CA3AF;
         }
 
         .nav-tabs {
@@ -1438,6 +1807,35 @@
                 </a></li>
             </ul>
             <div class="actions">
+                <div class="network-signal-detector" id="networkSignalDetector">
+                    <div class="signal-bars">
+                        <span class="signal-bar bar-1"></span>
+                        <span class="signal-bar bar-2"></span>
+                        <span class="signal-bar bar-3"></span>
+                        <span class="signal-bar bar-4"></span>
+                    </div>
+                    <span class="signal-latency" id="signalLatency">--ms</span>
+
+                    <!-- Hover tooltip -->
+                    <div class="signal-tooltip" id="signalTooltip">
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">网络延迟:</span>
+                            <span class="tooltip-value" id="tooltipLatency">--ms</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">状态:</span>
+                            <span class="tooltip-value" id="tooltipStatus">检测中</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">抖动:</span>
+                            <span class="tooltip-value" id="tooltipJitter">--ms</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">连接:</span>
+                            <span class="tooltip-value" id="tooltipConnection">WebSocket</span>
+                        </div>
+                    </div>
+                </div>
                 <a href="/logout" class="logout-btn">
                     <i class="fa fas fa-sign-out-alt"></i>
                     Sign Out
@@ -1455,6 +1853,9 @@
                         </button>
                         <button class="voice-btn" data-voice="matthew">
                             <img src="/static/images/matthew_miyazaki.png" class="bubble-avatar" style="width:32px;height:32px;margin-right:8px;" alt="Matthew"> Matthew
+                        </button>
+                        <button class="more-voices-btn" id="moreVoicesBtn">
+                            <i class="fas fa-globe"></i> More Voices
                         </button>
                     </div>
                     
@@ -1644,7 +2045,7 @@
         const SAMPLE_RATE = 24000;
         const INPUT_SAMPLE_RATE = 16000;
         const CHUNK_SIZE = 512;
-        let silenceThreshold = 0.02; 
+        let silenceThreshold = 0.02;
         let silenceCounter = 0;
         const MAX_SILENCE_FRAMES = 20;
         let isInitialized = false;
@@ -1658,17 +2059,231 @@
         let bufferSize = 0;
         const MAX_BUFFER_SIZE = 4096;
 
-        // Role information structure
+        // Network Signal Detector Variables
+        let networkDetector = {
+            latencies: [],
+            maxSamples: 10,
+            pingInterval: null,
+            lastPingTime: 0,
+            consecutiveFailures: 0,
+            isMonitoring: false
+        };
+
+        // Update network signal UI
+        function updateNetworkSignal(latency) {
+            const detector = document.getElementById('networkSignalDetector');
+            const latencyDisplay = document.getElementById('signalLatency');
+            const tooltipLatency = document.getElementById('tooltipLatency');
+            const tooltipStatus = document.getElementById('tooltipStatus');
+            const tooltipJitter = document.getElementById('tooltipJitter');
+            const tooltipConnection = document.getElementById('tooltipConnection');
+
+            if (!detector) return;
+
+            // Add latency to history
+            networkDetector.latencies.push(latency);
+            if (networkDetector.latencies.length > networkDetector.maxSamples) {
+                networkDetector.latencies.shift();
+            }
+
+            // Calculate average latency
+            const avgLatency = Math.round(
+                networkDetector.latencies.reduce((a, b) => a + b, 0) / networkDetector.latencies.length
+            );
+
+            // Calculate jitter (standard deviation)
+            const mean = networkDetector.latencies.reduce((a, b) => a + b, 0) / networkDetector.latencies.length;
+            const variance = networkDetector.latencies.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / networkDetector.latencies.length;
+            const jitter = Math.round(Math.sqrt(variance));
+
+            // Determine signal quality
+            let signalClass = 'offline';
+            let statusText = '离线';
+
+            if (avgLatency < 100) {
+                signalClass = 'excellent';
+                statusText = '优秀';
+            } else if (avgLatency < 200) {
+                signalClass = 'good';
+                statusText = '良好';
+            } else if (avgLatency < 400) {
+                signalClass = 'fair';
+                statusText = '一般';
+            } else if (avgLatency < 600) {
+                signalClass = 'poor';
+                statusText = '较差';
+            } else {
+                signalClass = 'bad';
+                statusText = '很差';
+            }
+
+            // Update UI
+            detector.className = `network-signal-detector ${signalClass}`;
+            latencyDisplay.textContent = `${avgLatency}ms`;
+            tooltipLatency.textContent = `${avgLatency}ms`;
+            tooltipStatus.textContent = statusText;
+            tooltipJitter.textContent = `±${jitter}ms`;
+            tooltipConnection.textContent = ws && ws.readyState === WebSocket.OPEN ? 'WebSocket 已连接' : 'WebSocket 断开';
+
+            // Reset failure counter on successful ping
+            networkDetector.consecutiveFailures = 0;
+        }
+
+        // Mark network as offline
+        function markNetworkOffline() {
+            const detector = document.getElementById('networkSignalDetector');
+            const latencyDisplay = document.getElementById('signalLatency');
+            const tooltipStatus = document.getElementById('tooltipStatus');
+            const tooltipConnection = document.getElementById('tooltipConnection');
+
+            if (!detector) return;
+
+            detector.className = 'network-signal-detector offline';
+            latencyDisplay.textContent = '--ms';
+            tooltipStatus.textContent = '离线';
+            tooltipConnection.textContent = 'WebSocket 断开';
+        }
+
+        // Start network monitoring
+        function startNetworkMonitoring() {
+            if (networkDetector.isMonitoring) return;
+
+            networkDetector.isMonitoring = true;
+            networkDetector.consecutiveFailures = 0;
+
+            // Send ping every 2 seconds
+            networkDetector.pingInterval = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    networkDetector.lastPingTime = Date.now();
+                    ws.send(JSON.stringify({
+                        type: 'ping',
+                        timestamp: networkDetector.lastPingTime
+                    }));
+                } else {
+                    networkDetector.consecutiveFailures++;
+                    if (networkDetector.consecutiveFailures >= 3) {
+                        markNetworkOffline();
+                    }
+                }
+            }, 2000);
+        }
+
+        // Stop network monitoring
+        function stopNetworkMonitoring() {
+            if (networkDetector.pingInterval) {
+                clearInterval(networkDetector.pingInterval);
+                networkDetector.pingInterval = null;
+            }
+            networkDetector.isMonitoring = false;
+            networkDetector.latencies = [];
+            markNetworkOffline();
+        }
+
+        // Role information structure - All 16 Nova Sonic voices
         const roles = {
+            // English (US) - Polyglot
             tiffany: {
                 name: "Tiffany",
                 avatar: "/static/images/tiffany_miyazaki.png",
-                themeClass: "theme-female"
+                themeClass: "theme-female",
+                lang: "en-US"
             },
             matthew: {
                 name: "Matthew",
                 avatar: "/static/images/matthew_miyazaki.png",
-                themeClass: "theme-male"
+                themeClass: "theme-male",
+                lang: "en-US"
+            },
+            // English (UK)
+            amy: {
+                name: "Amy",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "en-GB"
+            },
+            olivia: {
+                name: "Olivia",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "en-GB"
+            },
+            // Spanish
+            lupe: {
+                name: "Lupe",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "es"
+            },
+            carlos: {
+                name: "Carlos",
+                avatar: "/static/images/matthew_miyazaki.png",
+                themeClass: "theme-male",
+                lang: "es"
+            },
+            // French
+            ambre: {
+                name: "Ambre",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "fr"
+            },
+            florian: {
+                name: "Florian",
+                avatar: "/static/images/matthew_miyazaki.png",
+                themeClass: "theme-male",
+                lang: "fr"
+            },
+            // German
+            tina: {
+                name: "Tina",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "de"
+            },
+            lennart: {
+                name: "Lennart",
+                avatar: "/static/images/matthew_miyazaki.png",
+                themeClass: "theme-male",
+                lang: "de"
+            },
+            // Italian
+            beatrice: {
+                name: "Beatrice",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "it"
+            },
+            lorenzo: {
+                name: "Lorenzo",
+                avatar: "/static/images/matthew_miyazaki.png",
+                themeClass: "theme-male",
+                lang: "it"
+            },
+            // Portuguese
+            carolina: {
+                name: "Carolina",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "pt"
+            },
+            leo: {
+                name: "Leo",
+                avatar: "/static/images/matthew_miyazaki.png",
+                themeClass: "theme-male",
+                lang: "pt"
+            },
+            // Hindi
+            kiara: {
+                name: "Kiara",
+                avatar: "/static/images/tiffany_miyazaki.png",
+                themeClass: "theme-female",
+                lang: "hi"
+            },
+            arjun: {
+                name: "Arjun",
+                avatar: "/static/images/matthew_miyazaki.png",
+                themeClass: "theme-male",
+                lang: "hi"
             }
         };
 
@@ -1815,6 +2430,10 @@
             } else if (data.type === 'tool_status') {
                 // Display tool execution status
                 displayToolStatus(data.status, data.message);
+            } else if (data.type === 'pong') {
+                // Handle pong response for network latency measurement
+                const latency = Date.now() - networkDetector.lastPingTime;
+                updateNetworkSignal(latency);
             }
         }
 
@@ -1939,26 +2558,32 @@
             const wsUrl = `${protocol}//${window.location.host}/ws/${clientId}`;
             console.log('Connecting to WebSocket:', wsUrl);
             ws = new WebSocket(wsUrl);
-            
+
             ws.onopen = () => {
                 console.log('WebSocket connected');
                 document.getElementById('toggleButton').disabled = false;
+                // Start network monitoring when WebSocket is connected
+                startNetworkMonitoring();
             };
 
             ws.onclose = () => {
                 console.log('WebSocket disconnected');
                 document.getElementById('toggleButton').disabled = true;
                 stopRecording();
+                // Stop network monitoring when WebSocket is disconnected
+                stopNetworkMonitoring();
             };
-            
+
             ws.onmessage = handleWebSocketMessage;
-            
+
             ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
                 const statusBadge = document.getElementById('statusBadge');
                 const statusText = document.getElementById('statusText');
                 statusText.textContent = 'Error';
                 statusBadge.className = 'status-badge error';
+                // Mark network as offline on error
+                markNetworkOffline();
             };
         }
 
@@ -2487,6 +3112,101 @@
                 }
             });
         });
+
+        // Voice Modal functionality
+        window.addEventListener('DOMContentLoaded', () => {
+            const voiceModal = document.getElementById('voiceModal');
+            const moreVoicesBtn = document.getElementById('moreVoicesBtn');
+            const closeVoiceModal = document.getElementById('closeVoiceModal');
+            const voiceOptions = document.querySelectorAll('.voice-option');
+
+            // Voice names mapping for display
+            const voiceNames = {
+                'tiffany': 'Tiffany',
+                'matthew': 'Matthew',
+                'amy': 'Amy',
+                'olivia': 'Olivia',
+                'lupe': 'Lupe',
+                'carlos': 'Carlos',
+                'ambre': 'Ambre',
+                'florian': 'Florian',
+                'tina': 'Tina',
+                'lennart': 'Lennart',
+                'beatrice': 'Beatrice',
+                'lorenzo': 'Lorenzo',
+                'carolina': 'Carolina',
+                'leo': 'Leo',
+                'kiara': 'Kiara',
+                'arjun': 'Arjun'
+            };
+
+            // Open modal
+            moreVoicesBtn.addEventListener('click', () => {
+                voiceModal.classList.add('show');
+                // Update selected state based on currentVoice
+                voiceOptions.forEach(opt => {
+                    opt.classList.remove('selected');
+                    if (opt.dataset.voice === currentVoice) {
+                        opt.classList.add('selected');
+                    }
+                });
+            });
+
+            // Close modal
+            closeVoiceModal.addEventListener('click', () => {
+                voiceModal.classList.remove('show');
+            });
+
+            // Close modal when clicking outside
+            voiceModal.addEventListener('click', (e) => {
+                if (e.target === voiceModal) {
+                    voiceModal.classList.remove('show');
+                }
+            });
+
+            // Handle voice option selection
+            voiceOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const newVoice = option.dataset.voice;
+
+                    // Update selection visual
+                    voiceOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+
+                    // Update main voice buttons
+                    document.querySelectorAll('.voice-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.voice === newVoice) {
+                            btn.classList.add('active');
+                        }
+                    });
+
+                    // If the selected voice is not tiffany or matthew, update the "More Voices" button
+                    if (newVoice !== 'tiffany' && newVoice !== 'matthew') {
+                        moreVoicesBtn.innerHTML = `<i class="fas fa-globe"></i> ${voiceNames[newVoice] || newVoice}`;
+                        moreVoicesBtn.classList.add('active-voice');
+                    } else {
+                        moreVoicesBtn.innerHTML = '<i class="fas fa-globe"></i> More Voices';
+                        moreVoicesBtn.classList.remove('active-voice');
+                    }
+
+                    // Call the existing switchVoice function
+                    switchVoice(newVoice);
+
+                    // Close modal after selection
+                    setTimeout(() => {
+                        voiceModal.classList.remove('show');
+                    }, 300);
+                });
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && voiceModal.classList.contains('show')) {
+                    voiceModal.classList.remove('show');
+                }
+            });
+        });
     </script>
     <!-- Add the main.js script for tab functionality -->
     <script src="/static/js/main.js"></script>
@@ -2536,6 +3256,138 @@
                             <i class="fas fa-book"></i>
                             Learn More
                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Selection Modal -->
+    <div id="voiceModal" class="voice-modal">
+        <div class="voice-modal-content">
+            <div class="voice-modal-header">
+                <h2><i class="fas fa-globe"></i> Select Voice</h2>
+                <button class="voice-modal-close" id="closeVoiceModal">&times;</button>
+            </div>
+            <div class="voice-modal-body">
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag-usa"></i> English (US) - Polyglot</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="tiffany" data-lang="en-US">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Tiffany</span>
+                            <span class="voice-desc">Female, warm & empathetic</span>
+                        </button>
+                        <button class="voice-option" data-voice="matthew" data-lang="en-US">
+                            <i class="fas fa-mars"></i>
+                            <span class="voice-name">Matthew</span>
+                            <span class="voice-desc">Male, calm & supportive</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag"></i> English (UK)</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="amy" data-lang="en-GB">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Amy</span>
+                            <span class="voice-desc">Female, British accent</span>
+                        </button>
+                        <button class="voice-option" data-voice="olivia" data-lang="en-GB">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Olivia</span>
+                            <span class="voice-desc">Female, British accent</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag"></i> Spanish</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="lupe" data-lang="es">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Lupe</span>
+                            <span class="voice-desc">Female, Spanish</span>
+                        </button>
+                        <button class="voice-option" data-voice="carlos" data-lang="es">
+                            <i class="fas fa-mars"></i>
+                            <span class="voice-name">Carlos</span>
+                            <span class="voice-desc">Male, Spanish</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag"></i> French</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="ambre" data-lang="fr">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Ambre</span>
+                            <span class="voice-desc">Female, French</span>
+                        </button>
+                        <button class="voice-option" data-voice="florian" data-lang="fr">
+                            <i class="fas fa-mars"></i>
+                            <span class="voice-name">Florian</span>
+                            <span class="voice-desc">Male, French</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag"></i> German</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="tina" data-lang="de">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Tina</span>
+                            <span class="voice-desc">Female, German</span>
+                        </button>
+                        <button class="voice-option" data-voice="lennart" data-lang="de">
+                            <i class="fas fa-mars"></i>
+                            <span class="voice-name">Lennart</span>
+                            <span class="voice-desc">Male, German</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag"></i> Italian</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="beatrice" data-lang="it">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Beatrice</span>
+                            <span class="voice-desc">Female, Italian</span>
+                        </button>
+                        <button class="voice-option" data-voice="lorenzo" data-lang="it">
+                            <i class="fas fa-mars"></i>
+                            <span class="voice-name">Lorenzo</span>
+                            <span class="voice-desc">Male, Italian</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag"></i> Portuguese</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="carolina" data-lang="pt">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Carolina</span>
+                            <span class="voice-desc">Female, Portuguese</span>
+                        </button>
+                        <button class="voice-option" data-voice="leo" data-lang="pt">
+                            <i class="fas fa-mars"></i>
+                            <span class="voice-name">Leo</span>
+                            <span class="voice-desc">Male, Portuguese</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="voice-language-group">
+                    <h3><i class="fas fa-flag"></i> Hindi</h3>
+                    <div class="voice-options">
+                        <button class="voice-option" data-voice="kiara" data-lang="hi">
+                            <i class="fas fa-venus"></i>
+                            <span class="voice-name">Kiara</span>
+                            <span class="voice-desc">Female, Hindi</span>
+                        </button>
+                        <button class="voice-option" data-voice="arjun" data-lang="hi">
+                            <i class="fas fa-mars"></i>
+                            <span class="voice-name">Arjun</span>
+                            <span class="voice-desc">Male, Hindi</span>
+                        </button>
                     </div>
                 </div>
             </div>
