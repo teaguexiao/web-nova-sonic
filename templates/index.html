@@ -1393,6 +1393,112 @@
             padding: 0;
         }
         
+        /* Text Input Area Styles */
+        .text-input-area {
+            padding: 1rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+            margin-top: 1rem;
+        }
+
+        .text-input-container {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .text-input-field {
+            flex: 1;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 1.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+            background: #F9FAFB;
+        }
+
+        .text-input-field:focus {
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .text-input-field::placeholder {
+            color: #9CA3AF;
+        }
+
+        .send-text-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .send-text-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .send-text-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-text-btn:disabled {
+            background: #D1D5DB;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-text-btn i {
+            font-size: 1.1rem;
+        }
+
+        .input-hint {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding-left: 0.5rem;
+            font-size: 0.75rem;
+            color: #9CA3AF;
+        }
+
+        .input-hint i {
+            font-size: 0.7rem;
+        }
+
+        /* Mobile responsiveness for text input */
+        @media (max-width: 768px) {
+            .text-input-area {
+                padding: 0.75rem;
+            }
+
+            .text-input-field {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .send-text-btn {
+                width: 42px;
+                height: 42px;
+            }
+
+            .input-hint {
+                display: none;
+            }
+        }
+
         .tool-item {
             display: flex;
             align-items: center;
@@ -1951,9 +2057,23 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Text Input Area -->
+                    <div class="text-input-area">
+                        <div class="text-input-container">
+                            <input type="text" id="textInput" class="text-input-field" placeholder="Type your message here..." autocomplete="off">
+                            <button id="sendTextBtn" class="send-text-btn" title="Send message">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="input-hint">
+                            <i class="fas fa-keyboard"></i>
+                            <span>Press Enter to send</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
+
             <!-- Tool Logs Section -->
             <div class="tool-logs-section" id="toolLogsSection">
                 <div class="tool-logs-header">
@@ -2602,6 +2722,87 @@
             };
         }
 
+        // Send text message to Nova Sonic
+        function sendTextMessage(text) {
+            console.log('[DEBUG] sendTextMessage called with:', text);
+            console.log('[DEBUG] ws object:', ws);
+            console.log('[DEBUG] ws.readyState:', ws ? ws.readyState : 'ws is null');
+
+            if (!text || !text.trim()) {
+                console.log('[DEBUG] Empty text, returning');
+                return;
+            }
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                console.error('WebSocket is not connected, ws:', ws, 'readyState:', ws ? ws.readyState : 'null');
+                alert('Please wait for the connection to be established');
+                return;
+            }
+
+            const trimmedText = text.trim();
+
+            // Hide welcome screen when user sends a message
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            if (welcomeScreen && !welcomeScreen.classList.contains('hidden')) {
+                welcomeScreen.classList.add('hidden');
+            }
+
+            // Add user message to transcript
+            addMessageToTranscript({
+                role: 'USER',
+                data: trimmedText
+            });
+
+            // Send text input to server
+            ws.send(JSON.stringify({
+                type: 'text_input',
+                text: trimmedText
+            }));
+
+            console.log('Sent text message:', trimmedText);
+        }
+
+        // Initialize text input event listeners
+        function initTextInput() {
+            console.log('[DEBUG] initTextInput called');
+            const textInput = document.getElementById('textInput');
+            const sendBtn = document.getElementById('sendTextBtn');
+
+            console.log('[DEBUG] textInput element:', textInput);
+            console.log('[DEBUG] sendBtn element:', sendBtn);
+
+            if (!textInput || !sendBtn) {
+                console.warn('Text input elements not found');
+                return;
+            }
+
+            console.log('[DEBUG] Setting up text input event listeners');
+
+            // Send button click handler
+            sendBtn.addEventListener('click', () => {
+                sendTextMessage(textInput.value);
+                textInput.value = '';
+                textInput.focus();
+            });
+
+            // Enter key handler
+            textInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendTextMessage(textInput.value);
+                    textInput.value = '';
+                }
+            });
+
+            // Enable/disable send button based on input
+            textInput.addEventListener('input', () => {
+                sendBtn.disabled = !textInput.value.trim();
+            });
+
+            // Initial state
+            sendBtn.disabled = true;
+        }
+
         // Initialize audio context and request microphone access
         async function initializeAudio() {
             if (isInitialized) return;
@@ -2927,6 +3128,39 @@
 
         // Initialize WebSocket connection when page loads
         window.addEventListener('load', initWebSocket);
+
+        // Initialize text input when page loads
+        window.addEventListener('load', initTextInput);
+
+        // Make example prompts clickable
+        window.addEventListener('load', () => {
+            const examplePrompts = document.querySelectorAll('.example-prompt');
+            examplePrompts.forEach(prompt => {
+                prompt.style.cursor = 'pointer';
+                prompt.addEventListener('click', () => {
+                    const text = prompt.querySelector('span').textContent;
+                    const textInput = document.getElementById('textInput');
+                    if (textInput) {
+                        textInput.value = text;
+                        textInput.focus();
+                        // Optionally send immediately
+                        sendTextMessage(text);
+                        textInput.value = '';
+                    }
+                });
+                // Add hover effect
+                prompt.addEventListener('mouseenter', () => {
+                    prompt.style.borderColor = 'var(--primary-color)';
+                    prompt.style.transform = 'translateY(-2px)';
+                    prompt.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+                });
+                prompt.addEventListener('mouseleave', () => {
+                    prompt.style.borderColor = '#E5E7EB';
+                    prompt.style.transform = 'translateY(0)';
+                    prompt.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
+                });
+            });
+        });
 
         function switchVoice(voice) {
             if (currentVoice === voice) return;

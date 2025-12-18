@@ -379,6 +379,7 @@ class StreamManager:
         self.display_assistant_text = False
         self.barge_in = False
         self.barge_in_time = 0  # Timestamp when barge-in was triggered
+        self.audio_sequence = 0  # 音频序列号，用于barge-in后区分新旧音频
         self.audio_output_queue = asyncio.Queue()
         self.response_task = None
         self.audio_task = None
@@ -1216,7 +1217,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
                     await stream_manager.change_voice(data["voice"])
 
                 elif data["type"] == "text_input":
-                    # Handle text input from example prompts
+                    # Handle text input from user
                     text = data.get("text", "")
                     if text:
                         print(f"Received text input from client #{client_id}: {text}")
@@ -1238,8 +1239,35 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str, session: Opti
                         await stream_manager.send_raw_event(text_input_event)
                         await stream_manager.send_raw_event(content_end)
 
-                        # Send prompt end to trigger assistant response
-                        await stream_manager.send_prompt_end_event()
+                        print(f"Text input events sent successfully for: {text}")
+
+                        # Start sending silent audio in background to trigger model response
+                        # Nova Sonic requires continuous audio input to trigger response generation
+                        async def send_silent_audio_background():
+                            silent_chunk_size = 1024 * 2  # 2 bytes per sample for 16-bit
+                            silent_chunk = b'\x00' * silent_chunk_size
+                            silent_audio_data = base64.b64encode(silent_chunk).decode('utf-8')
+
+                            print(f"Starting silent audio stream for text input...")
+                            # Send for about 5 seconds max or until stream becomes inactive
+                            for i in range(500):  # 500 frames * 10ms = 5 seconds max
+                                if not stream_manager.is_active:
+                                    break
+                                try:
+                                    audio_event = AUDIO_EVENT_TEMPLATE % (
+                                        stream_manager.prompt_name,
+                                        stream_manager.audio_content_name,
+                                        silent_audio_data
+                                    )
+                                    await stream_manager.send_raw_event(audio_event)
+                                    await asyncio.sleep(0.01)  # 10ms interval
+                                except Exception as e:
+                                    print(f"Error sending silent audio: {e}")
+                                    break
+                            print(f"Silent audio stream ended")
+
+                        # Start the silent audio task in background
+                        asyncio.create_task(send_silent_audio_background())
 
                 elif data["type"] == "ping":
                     # Handle ping request for network latency measurement

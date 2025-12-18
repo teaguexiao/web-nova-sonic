@@ -73,6 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let lastBargeInTime = 0;  // Track last barge-in time to avoid spam
     let isUserSpeaking = false;  // Track if user is currently speaking
     let userSpeakingTimeout = null;  // Timeout to reset isUserSpeaking
+    let bargeInActive = false;           // barge-in保护期激活标志
+    let bargeInProtectTimeout = null;    // 保护期超时计时器
+    let currentAudioSequence = 0;        // 当前有效音频序列号
+    const BARGE_IN_PROTECT_TIME = 2000;  // 保护期2秒
     
     // Function to show status messages
     function showStatus(message, type = 'info') {
