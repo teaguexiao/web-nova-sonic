@@ -7,18 +7,14 @@ Nova Sonic is a real-time voice interaction demonstration project based on Amazo
 ## 🆕 Latest Updates (Nova Sonic 2)
 
 ### Multi-language Support
-Nova Sonic 2 now supports multiple languages:
+Nova Sonic 2 now supports **7 languages**:
 - **English** (US, UK)
 - **Spanish** (US, Spain)
 - **French** (France, Canada)
 - **German**
 - **Italian**
-- **Japanese**
 - **Portuguese** (Brazil)
 - **Hindi**
-- **Arabic**
-- **Mandarin Chinese**
-- **Korean**
 
 ### Text Input Modality
 In addition to voice interaction, **text input** is now supported:
