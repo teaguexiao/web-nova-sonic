@@ -43,7 +43,7 @@ Support for **async tool calling** for improved user experience:
 ## 🌟 Key Features
 
 - **Model Version**: Amazon Nova Sonic 2 (amazon.nova-2-sonic-v1:0)
-- **Regional Availability**: US East (N. Virginia)
+- **Regional Availability**: US East (N. Virginia), US West (Oregon), Asia Pacific (Tokyo)
 - **Cost-Effective**:
   - Speech modality: $0.003/1K input tokens, $0.012/1K output tokens
   - Text modality: $0.000319/1K input tokens, $0.002651/1K output tokens

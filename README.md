@@ -43,7 +43,7 @@ Nova Sonic 2 现已支持 **7 种语言**：
 ## 🌟 主要特点
 
 - **模型版本**：Amazon Nova Sonic 2 (amazon.nova-2-sonic-v1:0)
-- **区域可用性**：US East (N. Virginia)
+- **区域可用性**：US East (N. Virginia), US West (Oregon), Asia Pacific (Tokyo)
 - **成本效益**：
   - 语音模态：$0.003/1K 输入 tokens, $0.012/1K 输出 tokens
   - 文本模态：$0.000319/1K 输入 tokens, $0.002651/1K 输出 tokens
