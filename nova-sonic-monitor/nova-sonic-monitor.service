@@ -1,0 +1,11 @@
+[Unit]
+Description=Nova Sonic Monitor
+After=network.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/nova-sonic-monitor
+ExecStart=/usr/bin/python3 /home/ubuntu/nova-sonic-monitor/monitor.py
+StandardOutput=journal
+StandardError=journal

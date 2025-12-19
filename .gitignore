@@ -22,3 +22,7 @@ ENV/
 *.pem 
 
 aws_info.txt
+
+# Monitor secrets
+nova-sonic-monitor/config.json
+nova-sonic-monitor/state.json

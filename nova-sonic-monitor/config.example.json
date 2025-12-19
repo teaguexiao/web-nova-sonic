@@ -1,0 +1,17 @@
+{
+  "service_name": "nova-sonic",
+  "local_port": 8100,
+  "external_url": "https://nova-sonic.teague.live/",
+  "alert_threshold": 2,
+  "smtp": {
+    "server": "smtp.gmail.com",
+    "port": 587,
+    "use_ssl": false,
+    "username": "your-email@gmail.com",
+    "password": "your-app-password",
+    "sender": "your-email@gmail.com",
+    "recipients": [
+      "alert-recipient@example.com"
+    ]
+  }
+}
